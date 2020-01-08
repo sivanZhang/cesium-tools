@@ -1,13 +1,10 @@
 <template>
   <div id="cesiumContainer">
-    <div class="contorler">
-      <button id="measure">开始测量</button>
-    </div>
+    <div class="contorler"></div>
   </div>
 </template>
-
 <script>
-let Cesium = require('cesium/Cesium')
+const Cesium = require('cesium/Cesium')
 export default {
   name: 'CesiumScene',
   data() {
@@ -19,9 +16,12 @@ export default {
   beforeDestroy() {},
   methods: {
     init() {
+      Cesium.Ion.defaultAccessToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkODZjOGY4Yy1jOGEzLTRlNzMtYTdlMS03ZWQ5MmE4M2RkMzEiLCJpZCI6MjA0NTYsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1Nzc0NzI0Nzd9.3OfoKjLexR3j8kcepsM_h0hj1vEpS0jd_aw9n-izLKk'
       let viewer = new Cesium.Viewer('cesiumContainer', {
         terrainProvider: new Cesium.createWorldTerrain({
-          requestVertexNormals: true
+          requestVertexNormals: true,
+          url: Cesium.IonResource.fromAssetId(3957)
         }),
         baseLayerPicker: false,
         fullscreenButton: false,
@@ -32,15 +32,17 @@ export default {
         navigationInstructionsInitiallyVisible: false,
         geocoder: false
       })
-      let { camera, scene, entities } = viewer
-      let { globe } = scene
+      var layers = viewer.scene.imageryLayers
+      layers.addImageryProvider(new Cesium.IonImageryProvider({ assetId: 3 }))
+      const { camera, scene, entities } = viewer
+      const { globe } = scene
       globe.depthTestAgainstTerrain = true
       // 初始化为WGS84标准的Ellipsoid实例。
-      let ellipsoid = Cesium.Ellipsoid.WGS84
+      const ellipsoid = Cesium.Ellipsoid.WGS84
       // 在连接两个提供的行星点的椭球上初始化一个测地线。
-      let geodesic = new Cesium.EllipsoidGeodesic()
+      const geodesic = new Cesium.EllipsoidGeodesic()
 
-      let tileset = new Cesium.Cesium3DTileset({
+      const tileset = new Cesium.Cesium3DTileset({
         url: './Tileset/tileset.json'
       })
       tileset.readyPromise
@@ -51,22 +53,22 @@ export default {
             new Cesium.HeadingPitchRange(0, -0.5, 0)
           )
           camera.lookAtTransform(Cesium.Matrix4.IDENTITY)
-          var heightOffset = 70.0
-          var boundingSphere = tileset.boundingSphere
-          var cartographic = Cesium.Cartographic.fromCartesian(
+          const heightOffset = 70.0
+          const boundingSphere = tileset.boundingSphere
+          const cartographic = Cesium.Cartographic.fromCartesian(
             boundingSphere.center
           )
-          var surface = Cesium.Cartesian3.fromRadians(
+          const surface = Cesium.Cartesian3.fromRadians(
             cartographic.longitude,
             cartographic.latitude,
             0.0
           )
-          var offset = Cesium.Cartesian3.fromRadians(
+          const offset = Cesium.Cartesian3.fromRadians(
             cartographic.longitude,
             cartographic.latitude,
             heightOffset
           )
-          var translation = Cesium.Cartesian3.subtract(
+          const translation = Cesium.Cartesian3.subtract(
             offset,
             surface,
             new Cesium.Cartesian3()
@@ -80,12 +82,12 @@ export default {
       // 瓦片加载完了
 
       // 点的可渲染集合。可以 add和remove
-      let points = scene.primitives.add(new Cesium.PointPrimitiveCollection())
-      let point1, point2
-      let point1GeoPosition, point2GeoPosition
+      const points = scene.primitives.add(new Cesium.PointPrimitiveCollection())
+      let point1, point3, point2
+      let point1GeoPosition, point3GeoPosition
       //  线的可渲染集合
-      let polylines = scene.primitives.add(new Cesium.PolylineCollection())
-      let polyline1, polyline2, polyline3
+      const polylines = scene.primitives.add(new Cesium.PolylineCollection())
+      let polyline
       let distanceLabel, verticalLabel, horizontalLabel
       let LINEPOINTCOLOR = Cesium.Color.BURLYWOOD
       // var labels = scene.primitives.add(new Cesium.LabelCollection({scene: scene}));
@@ -93,9 +95,9 @@ export default {
       // 按钮切换编辑状态
 
       // 1. Draw a translucent ellipse on the surface with a checkerboard pattern
-      let measureButton = document.getElementById('measure')
-      let isEdit = false
-      let label = {
+      // const measureButton = document.getElementById('measure')
+      // let isEdit = false
+      const label = {
         font: '14px monospace',
         showBackground: true,
         horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
@@ -113,260 +115,188 @@ export default {
           semiMajorAxis: 50
         }
       })
-      measureButton.addEventListener('click', handelMeasure, false)
-
+      // measureButton.addEventListener('click', handelMeasure, false)
+      handelMeasure()
       function handelMeasure() {
-        isEdit = !isEdit
-        let handler = new Cesium.ScreenSpaceEventHandler(scene.canvas)
-        if (isEdit) {
-          measureButton.innerText = '关闭测量'
-          handler.setInputAction(function({ position }) {
-            if (scene.mode !== Cesium.SceneMode.MORPHING) {
-              // 返回具有' primitive'属性的对象   [id] 是entity实体
-              // 点击地方的笛卡尔坐标
-              let cartesian = null
-              let pickedObject = scene.pick(position)
-              console.log('pickedObject------:'), pickedObject
-              if (scene.pickPositionSupported && Cesium.defined(pickedObject)) {
-                cartesian = scene.pickPosition(position)
-                console.log('实体点')
-              } else {
-                let ray = camera.getPickRay(position)
-                cartesian = globe.pick(ray, scene)
-                console.log('地形点')
-              }
-
-              if (Cesium.defined(cartesian)) {
-                if (points.length === 2) {
-                  points.removeAll()
-                  polylines.removeAll()
-                  // entities.removeAll()
-                  entities.remove(distanceLabel)
-                  entities.remove(horizontalLabel)
-                  entities.remove(verticalLabel)
-                }
-                //add first point
-                if (points.length === 0) {
-                  point1 = points.add({
-                    position: cartesian,
-                    color: Cesium.Color.RED
-                  })
-                } // add second point and lines
-                else if (points.length === 1) {
-                  point2 = points.add({
-                    position: cartesian,
-                    color: Cesium.Color.RED
-                  })
-                  // 点的笛卡尔坐标转换为制图坐标。
-                  point1GeoPosition = Cesium.Cartographic.fromCartesian(
-                    point1.position
-                  )
-                  point2GeoPosition = Cesium.Cartographic.fromCartesian(
-                    point2.position
-                  )
-
-                  // 三根线的两点位置
-                  let pl1Positions = [point1.position, point2.position]
-                  let pl2Positions = []
-                  let pl3Positions = []
-                  let labelZ
-                  if (point2GeoPosition.height >= point1GeoPosition.height) {
-                    pl2Positions = [
-                      point2.position,
-                      new Cesium.Cartesian3.fromRadians(
-                        point1GeoPosition.longitude,
-                        point1GeoPosition.latitude,
-                        point2GeoPosition.height
-                      )
-                    ]
-
-                    pl3Positions = [
-                      point1.position,
-                      new Cesium.Cartesian3.fromRadians(
-                        point1GeoPosition.longitude,
-                        point1GeoPosition.latitude,
-                        point2GeoPosition.height
-                      )
-                    ]
-
-                    circle.position = point2.position
-                    circle.ellipse.height = point2GeoPosition.height
-                    circle.ellipse.show = true
-                    labelZ =
-                      point1GeoPosition.height +
-                      (point2GeoPosition.height - point1GeoPosition.height) /
-                        2.0
-                  } else {
-                    pl2Positions = [
-                      point1.position,
-                      new Cesium.Cartesian3.fromRadians(
-                        point2GeoPosition.longitude,
-                        point2GeoPosition.latitude,
-                        point1GeoPosition.height
-                      )
-                    ]
-                    pl3Positions = [
-                      point2.position,
-                      new Cesium.Cartesian3.fromRadians(
-                        point2GeoPosition.longitude,
-                        point2GeoPosition.latitude,
-                        point1GeoPosition.height
-                      )
-                    ]
-
-                    circle.position = point1.position
-                    circle.ellipse.height = point1GeoPosition.height
-                    circle.ellipse.show = true
-                    labelZ =
-                      point2GeoPosition.height +
-                      (point1GeoPosition.height - point2GeoPosition.height) /
-                        2.0
+        // isEdit = !isEdit
+        const handler = new Cesium.ScreenSpaceEventHandler(scene.canvas)
+        const handler2 = new Cesium.ScreenSpaceEventHandler(scene.canvas)
+        // if (isEdit) {
+        // measureButton.innerText = '关闭测量'
+        handler.setInputAction(function({ position }) {
+          if (scene.mode !== Cesium.SceneMode.MORPHING) {
+            let plPositions = []
+            polyline = polylines.add({
+              show: false,
+              width: 2,
+              material: new Cesium.Material({
+                fabric: {
+                  type: 'Color',
+                  uniforms: {
+                    color: LINEPOINTCOLOR
                   }
-
-                  polyline1 = polylines.add({
-                    show: true,
-                    positions: pl1Positions,
-                    width: 2,
-                    material: new Cesium.Material({
-                      fabric: {
-                        type: 'Color',
-                        uniforms: {
-                          color: LINEPOINTCOLOR
-                        }
-                      }
-                    })
-                  })
-                  polyline2 = polylines.add({
-                    show: true,
-                    positions: pl2Positions,
-                    width: 1,
-                    material: new Cesium.Material({
-                      fabric: {
-                        type: 'PolylineDash',
-                        uniforms: {
-                          color: LINEPOINTCOLOR
-                        }
-                      }
-                    })
-                  })
-
-                  // label高度
-
-                  polyline3 = polylines.add({
-                    show: true,
-                    positions: pl3Positions,
-                    width: 1,
-                    material: new Cesium.Material({
-                      fabric: {
-                        type: 'PolylineDash',
-                        uniforms: {
-                          color: LINEPOINTCOLOR
-                        }
-                      }
-                    })
-                  })
-                  addDistanceLabel(point1, point2, labelZ)
                 }
+              })
+            })
+            // 鼠标触发的位置的笛卡尔坐标
+            const cartesian = getMouseEventPosition(position)
+            
+            
+            if (Cesium.defined(cartesian)) {
+              if (points.contains(point1) && points.contains(point3)) {
+                points.removeAll()
+                polylines.removeAll()
+                entities.remove(distanceLabel)
+                entities.remove(horizontalLabel)
+                entities.remove(verticalLabel)
+              }
+              //add first point
+              if (points.length === 0) {
+                point1 = points.add({
+                  position: cartesian,
+                  color: Cesium.Color.RED
+                })
+                point2 = points.add({
+                  color: Cesium.Color.RED
+                })
+                point1GeoPosition = Cesium.Cartographic.fromCartesian(cartesian)
+
+                polyline.show = true
+                circle.ellipse.show = true
+                handler2.setInputAction(function({endPosition}) {
+                  const hoverCartesian = getMouseEventPosition(endPosition)
+                  const point2GeoPosition = Cesium.Cartographic.fromCartesian(
+                    hoverCartesian
+                  )
+                  point2.position = hoverCartesian
+
+                  if (point2GeoPosition.height >= point1GeoPosition.height) {
+                    plPositions = [
+                      point1.position,
+                      new Cesium.Cartesian3.fromRadians(
+                        point1GeoPosition.longitude,
+                        point1GeoPosition.latitude,
+                        point2GeoPosition.height
+                      )
+                    ]
+
+                    /* circle.position = point1.position
+                    circle.ellipse.height = point2GeoPosition.height */
+                  } else {
+                    plPositions = [
+                      point2.position,
+                      new Cesium.Cartesian3.fromRadians(
+                        point2GeoPosition.longitude,
+                        point2GeoPosition.latitude,
+                        point1GeoPosition.height
+                      )
+                    ]
+
+                    /* circle.position = point2.position
+                    circle.ellipse.height = point1GeoPosition.height */
+                  }
+                  polyline.positions = plPositions
+                }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+              } // add second point and lines
+              else if (!points.contains(point3)) {
+                handler2 && handler2.destroy()
+                points.remove(point2)
+                point3 = points.add({
+                  position: cartesian,
+                  color: Cesium.Color.RED
+                })
+                // 点的笛卡尔坐标转换为制图坐标。
+                point3GeoPosition = Cesium.Cartographic.fromCartesian(
+                  point3.position
+                )
+
+                // 三根线的两点位置
+
+                let labelZ
+                if (point3GeoPosition.height >= point1GeoPosition.height) {
+                  plPositions = [
+                    point1.position,
+                    new Cesium.Cartesian3.fromRadians(
+                      point1GeoPosition.longitude,
+                      point1GeoPosition.latitude,
+                      point3GeoPosition.height
+                    )
+                  ]
+
+                  circle.position = point1.position
+                  circle.ellipse.height = point3GeoPosition.height
+                  circle.ellipse.show = true
+                  labelZ =
+                    point1GeoPosition.height +
+                    (point3GeoPosition.height - point1GeoPosition.height)
+                } else {
+                  plPositions = [
+                    point3.position,
+                    new Cesium.Cartesian3.fromRadians(
+                      point3GeoPosition.longitude,
+                      point3GeoPosition.latitude,
+                      point1GeoPosition.height
+                    )
+                  ]
+
+                  circle.position = point3.position
+                  circle.ellipse.height = point1GeoPosition.height
+                  circle.ellipse.show = true
+                  labelZ =
+                    point3GeoPosition.height +
+                    (point1GeoPosition.height - point3GeoPosition.height)
+                }
+                polyline.positions = plPositions
+                addDistanceLabel(point1, point3, labelZ)
               }
             }
-          }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
-        } else {
-          measureButton.innerText = '开启测量'
-          entities.removeAll()
-          points.removeAll()
-          polylines.removeAll()
-          handler && handler.destroy()
-        }
+          }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
+        // } else {
+        //   //  measureButton.innerText = '开启测量'
+        //   entities.removeAll()
+        //   points.removeAll()
+        //   polylines.removeAll()
+        //   handler && handler.destroy()
+        // }
       }
-      function addDistanceLabel(point1, point2, height) {
+      function addDistanceLabel(point1, point3, height) {
         point1.cartographic = ellipsoid.cartesianToCartographic(point1.position)
-        point2.cartographic = ellipsoid.cartesianToCartographic(point2.position)
+        point3.cartographic = ellipsoid.cartesianToCartographic(point3.position)
 
         point1.longitude = parseFloat(Cesium.Math.toDegrees(point1.position.x))
         point1.latitude = parseFloat(Cesium.Math.toDegrees(point1.position.y))
-        point2.longitude = parseFloat(Cesium.Math.toDegrees(point2.position.x))
-        point2.latitude = parseFloat(Cesium.Math.toDegrees(point2.position.y))
+        point3.longitude = parseFloat(Cesium.Math.toDegrees(point3.position.x))
+        point3.latitude = parseFloat(Cesium.Math.toDegrees(point3.position.y))
 
-        if (point2GeoPosition.height >= point1GeoPosition.height) {
+        if (point3GeoPosition.height >= point1GeoPosition.height) {
           label.text = getVerticalDistanceString()
           verticalLabel = entities.add({
             position: getMidpoint(point1, point1, height),
             label: label
           })
-
-          label.text = getHorizontalDistanceString(point1, point2)
-          horizontalLabel = entities.add({
-            position: getMidpoint(point2, point1, point2GeoPosition.height),
-            label: label
-          })
-          label.text = getDistanceString(point1, point2)
-          distanceLabel = entities.add({
-            position: getMidpoint(point1, point2, height),
-            label: label
-          })
         } else {
           label.text = getVerticalDistanceString()
           verticalLabel = entities.add({
-            position: getMidpoint(point2, point2, height),
-            label: label
-          })
-          label.text = getHorizontalDistanceString(point1, point2)
-          horizontalLabel = entities.add({
-            position: getMidpoint(point1, point2, point1GeoPosition.height),
-            label: label
-          })
-          label.text = getDistanceString(point1, point2)
-          distanceLabel = entities.add({
-            position: getMidpoint(point1, point2, height),
+            position: getMidpoint(point3, point3, height),
             label: label
           })
         }
-      }
-
-      function getHorizontalDistanceString(point1, point2) {
-        // 设置测地线的起点和终点
-        geodesic.setEndPoints(point1.cartographic, point2.cartographic)
-        // 获取起点和终点之间的表面距离
-        var meters = geodesic.surfaceDistance.toFixed(2)
-        if (meters >= 1000) {
-          return (meters / 1000).toFixed(2) + ' км'
-        }
-        return meters + ' м'
       }
 
       function getVerticalDistanceString() {
-        var heights = [point1GeoPosition.height, point2GeoPosition.height]
+        var heights = [point1GeoPosition.height, point3GeoPosition.height]
         var meters =
           Math.max.apply(Math, heights) - Math.min.apply(Math, heights)
         if (meters >= 1000) {
-          return (meters / 1000).toFixed(1) + ' км'
+          return `高度差：${(meters / 1000).toFixed(2)} км`
         }
-        return meters.toFixed(2) + ' м'
+        return `高度差：${meters.toFixed(2)} м`
       }
 
-      function getDistanceString(point1, point2) {
-        geodesic.setEndPoints(point1.cartographic, point2.cartographic)
-        var horizontalMeters = geodesic.surfaceDistance.toFixed(2)
-        var heights = [point1GeoPosition.height, point2GeoPosition.height]
-        var verticalMeters =
-          Math.max.apply(Math, heights) - Math.min.apply(Math, heights)
-        var meters = Math.pow(
-          Math.pow(horizontalMeters, 2) + Math.pow(verticalMeters, 2),
-          0.5
-        )
-
-        // 圆的半径等于 连点间的等高距离
-        /* circle.ellipse.semiMinorAxis = meters
-	circle.ellipse.semiMajorAxis = meters */
-        if (meters >= 1000) {
-          return (meters / 1000).toFixed(1) + ' км'
-        }
-        return meters.toFixed(2) + ' м'
-      }
-
-      function getMidpoint(point1, point2, height) {
+      function getMidpoint(p1, p2, height) {
         var scratch = new Cesium.Cartographic()
-        geodesic.setEndPoints(point1.cartographic, point2.cartographic)
+        geodesic.setEndPoints(p1.cartographic, p2.cartographic)
         var midpointCartographic = geodesic.interpolateUsingFraction(
           0.5,
           scratch
@@ -377,12 +307,34 @@ export default {
           height
         )
       }
+
+      /**
+       *
+       * 获取事件target的位置
+       * @params {Object} position   event.position cesium事件对象中的position
+       * @return 返回事件触发位置的世界坐标
+       *
+       **/
+      function getMouseEventPosition(position) {
+        let cartesian = null
+        const pickedObject = scene.pick(position)
+
+        // 判断点击的是地形还是实体，然后用两种方式pick 算出 cartesian
+
+        if (scene.pickPositionSupported && Cesium.defined(pickedObject)) {
+          cartesian = scene.pickPosition(position)
+        } else {
+          let ray = camera.getPickRay(position)
+          cartesian = globe.pick(ray, scene)
+        }
+        return cartesian
+      }
     }
   }
 }
 </script>
 
-<style lang='scss' scoped>
+<style lang="scss" scoped>
 @import url('~cesium/Widgets/widgets.css');
 #cesiumContainer {
   width: 100%;
