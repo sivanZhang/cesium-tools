@@ -1,6 +1,5 @@
 <template>
   <div id="cesiumContainer">
-    <div class="contorler"></div>
   </div>
 </template>
 <script>
@@ -347,20 +346,5 @@ export default {
   padding: 0;
   overflow: hidden;
   position: relative;
-}
-
-.contorler {
-  position: absolute;
-  z-index: 1000;
-}
-
-.contorler button {
-  background: rgb(25, 190, 107);
-  color: #fff;
-  outline: none;
-  border: 1px solid rgb(19, 138, 78);
-  padding: 6px 12px;
-  cursor: pointer;
-  border-radius: 4px;
 }
 </style>
