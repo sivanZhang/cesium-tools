@@ -140,12 +140,12 @@ export default {
             })
             // 鼠标触发的位置的笛卡尔坐标
             const cartesian = getMouseEventPosition(position)
-            
-            
+
             if (Cesium.defined(cartesian)) {
               if (points.contains(point1) && points.contains(point3)) {
                 points.removeAll()
                 polylines.removeAll()
+                
                 entities.remove(distanceLabel)
                 entities.remove(horizontalLabel)
                 entities.remove(verticalLabel)
@@ -163,13 +163,13 @@ export default {
 
                 polyline.show = true
                 circle.ellipse.show = true
-                handler2.setInputAction(function({endPosition}) {
+                handler2.setInputAction(function({ endPosition }) {
                   const hoverCartesian = getMouseEventPosition(endPosition)
                   const point2GeoPosition = Cesium.Cartographic.fromCartesian(
                     hoverCartesian
                   )
                   point2.position = hoverCartesian
-
+                  let labelZ
                   if (point2GeoPosition.height >= point1GeoPosition.height) {
                     plPositions = [
                       point1.position,
@@ -179,7 +179,9 @@ export default {
                         point2GeoPosition.height
                       )
                     ]
-
+                    labelZ =
+                      point1GeoPosition.height +
+                      (point2GeoPosition.height - point1GeoPosition.height)
                     /* circle.position = point1.position
                     circle.ellipse.height = point2GeoPosition.height */
                   } else {
@@ -194,8 +196,13 @@ export default {
 
                     /* circle.position = point2.position
                     circle.ellipse.height = point1GeoPosition.height */
+                    labelZ =
+                      point2GeoPosition.height +
+                      (point1GeoPosition.height - point2GeoPosition.height)
                   }
                   polyline.positions = plPositions
+                  addDistanceLabel(point1, point2, labelZ)
+                  
                 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
               } // add second point and lines
               else if (!points.contains(point3)) {
@@ -311,7 +318,7 @@ export default {
       /**
        *
        * 获取事件target的位置
-       * @params {Object} position   event.position cesium事件对象中的position
+       * @params {Object} position  事件对象中的position
        * @return 返回事件触发位置的世界坐标
        *
        **/
@@ -319,7 +326,7 @@ export default {
         let cartesian = null
         const pickedObject = scene.pick(position)
 
-        // 判断点击的是地形还是实体，然后用两种方式pick 算出 cartesian
+        // 判断点击的对象，然后用两种方式pick 算出 cartesian
 
         if (scene.pickPositionSupported && Cesium.defined(pickedObject)) {
           cartesian = scene.pickPosition(position)
