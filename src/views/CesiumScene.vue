@@ -145,7 +145,7 @@ export default {
               if (points.contains(point1) && points.contains(point3)) {
                 points.removeAll()
                 polylines.removeAll()
-                
+
                 entities.remove(distanceLabel)
                 entities.remove(horizontalLabel)
                 entities.remove(verticalLabel)
@@ -202,7 +202,6 @@ export default {
                   }
                   polyline.positions = plPositions
                   addDistanceLabel(point1, point2, labelZ)
-                  
                 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
               } // add second point and lines
               else if (!points.contains(point3)) {
@@ -233,6 +232,7 @@ export default {
                   circle.position = point1.position
                   circle.ellipse.height = point3GeoPosition.height
                   circle.ellipse.show = true
+                  
                   labelZ =
                     point1GeoPosition.height +
                     (point3GeoPosition.height - point1GeoPosition.height)
@@ -249,6 +249,7 @@ export default {
                   circle.position = point3.position
                   circle.ellipse.height = point1GeoPosition.height
                   circle.ellipse.show = true
+
                   labelZ =
                     point3GeoPosition.height +
                     (point1GeoPosition.height - point3GeoPosition.height)
@@ -314,23 +315,19 @@ export default {
           height
         )
       }
-
       /**
-       *
        * 获取事件target的位置
-       * @params {Object} position  事件对象中的position
-       * @return 返回事件触发位置的世界坐标
-       *
+       * @param {Object} position  事件对象中的position
+       * @return {Cartesian3}
        **/
       function getMouseEventPosition(position) {
         let cartesian = null
         const pickedObject = scene.pick(position)
-
-        // 判断点击的对象，然后用两种方式pick 算出 cartesian
-
+        // 判断点击的对象
         if (scene.pickPositionSupported && Cesium.defined(pickedObject)) {
           cartesian = scene.pickPosition(position)
-        } else {
+        }
+        else {
           let ray = camera.getPickRay(position)
           cartesian = globe.pick(ray, scene)
         }
