@@ -36,7 +36,9 @@ export default {
 			const { globe } = scene
 
 			const ellipsoid = Cesium.Ellipsoid.WGS84
-			const LINEPOINTCOLOR = Cesium.Color.BURLYWOOD
+			let LINEPOINTCOLOR = Cesium.Color.fromBytes(210,225,100)
+			console.log(LINEPOINTCOLOR, 'LINEPOINTCOLOR')
+
 			// 在连接两个提供的行星点的椭球上初始化一个测地线。
 			const geodesic = new Cesium.EllipsoidGeodesic()
 			const tileset = new Cesium.Cesium3DTileset({
@@ -106,7 +108,7 @@ export default {
 					if (scene.mode !== Cesium.SceneMode.MORPHING) {
 						let plPositions = []
 						// 鼠标触发的位置的笛卡尔坐标
-						const cartesian = getMouseEventPosition(position)
+						const cartesian = getEventInputPosition(position)
 
 						if (Cesium.defined(cartesian)) {
 							if (points.length === 2 && points.contains(point3)) {
@@ -122,7 +124,6 @@ export default {
 									label: label
 								})
 								circle = entities.add({
-									id: 'custom_circle',
 									ellipse: {
 										material: Cesium.Color.WHITE.withAlpha(0.3),
 										show: false,
@@ -151,16 +152,15 @@ export default {
 								})
 								point1GeoPosition = Cesium.Cartographic.fromCartesian(
 									cartesian
-                )
+								)
 								polyline.show = true
-                circle.ellipse.show = true
-                
+								circle.ellipse.show = true
 
 								handler2 = new Cesium.ScreenSpaceEventHandler(
 									scene.canvas
 								)
 								handler2.setInputAction(function({ endPosition }) {
-									const hoverCartesian = getMouseEventPosition(
+									const hoverCartesian = getEventInputPosition(
 										endPosition
 									)
 									const point2GeoPosition = Cesium.Cartographic.fromCartesian(
@@ -325,7 +325,7 @@ export default {
 			 * @param {Object} position 输入事件对象中的position
 			 * @return {Cartesian3} 输入事件的位置
 			 **/
-			function getMouseEventPosition(position) {
+			function getEventInputPosition(position) {
 				let cartesian = null
 				const pickedObject = scene.pick(position)
 				if (scene.pickPositionSupported && Cesium.defined(pickedObject)) {
@@ -350,20 +350,5 @@ export default {
 	padding: 0;
 	overflow: hidden;
 	position: relative;
-}
-
-.contorler {
-	position: absolute;
-	z-index: 1000;
-}
-
-.contorler button {
-	background: rgb(25, 190, 107);
-	color: #fff;
-	outline: none;
-	border: 1px solid rgb(19, 138, 78);
-	padding: 6px 12px;
-	cursor: pointer;
-	border-radius: 4px;
 }
 </style>
