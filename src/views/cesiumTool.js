@@ -1,35 +1,35 @@
-// 设置为私有方法
+// 设置私有方法名为 Symbol
 const [
-	getVerticalDistanceString,
-	getEventInputPosition,
-	addDistanceLabel,
-	getLabelPosition,
-	getDistanceString,
-	getHorizontalDistanceString
+	_getVerticalDistanceString,
+	_getEventInputPosition,
+	_addDistanceLabel,
+	_getLabelPosition,
+	_getDistanceString,
+	_getHorizontalDistanceString
 ] = [
-	Symbol('getVerticalDistanceString'),
-	Symbol('getEventInputPosition'),
-	Symbol('addDistanceLabel'),
-	Symbol('getLabelPosition'),
-	Symbol('getDistanceString'),
-	Symbol('getHorizontalDistanceString')
+	Symbol('_getVerticalDistanceString'),
+	Symbol('_getEventInputPosition'),
+	Symbol('_addDistanceLabel'),
+	Symbol('_getLabelPosition'),
+	Symbol('_getDistanceString'),
+	Symbol('_getHorizontalDistanceString')
 ]
 class CesiumTool {
 	constructor(Cesium, viewer) {
 		if (!Cesium) {
 			throw new Error(
-				'Cesium is not define in cesiumTool.（实例化CesiumTool的时候没有定义Cesium类）'
+				'实例化CesiumTool的时候没有定义Cesium类'
 			)
 		}
 		if (!viewer) {
 			throw new Error(
-				'viewer is not define in cesiumTool.（实例化CesiumTool的时候没有定义viewer实例）'
+				'实例化CesiumTool的时候没有定义viewer实例'
 			)
 		}
 		this.Cesium = Cesium
 		this.viewer = viewer
 	}
-	/* default label */
+	// default label
 	get label() {
 		return {
 			font: '14px monospace',
@@ -42,11 +42,9 @@ class CesiumTool {
 		}
 	}
 	/**
-	 * 获取输入事件的位置
-	 * @param {Object} position 输入事件对象中的position
 	 * @return {Cartesian3} 输入事件的位置
 	 **/
-	handelMeasure() {
+	start() {
 		const handler = new this.Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas)
 		const polylines = this.viewer.scene.primitives.add(
 			new this.Cesium.PolylineCollection()
@@ -68,7 +66,7 @@ class CesiumTool {
 			if (this.viewer.scene.mode !== this.Cesium.SceneMode.MORPHING) {
 				let plPositions = []
 				// 鼠标触发的位置的笛卡尔坐标
-				const cartesian = this[getEventInputPosition](position)
+				const cartesian = this[_getEventInputPosition](position)
 
 				if (this.Cesium.defined(cartesian)) {
 					if (points.length === 2 && points.contains(point3)) {
@@ -118,7 +116,7 @@ class CesiumTool {
 							this.viewer.scene.canvas
 						)
 						handler2.setInputAction(({ endPosition }) => {
-							const hoverCartesian = this[getEventInputPosition](
+							const hoverCartesian = this[_getEventInputPosition](
 								endPosition
 							)
 							const point2GeoPosition = this.Cesium.Cartographic.fromCartesian(
@@ -152,7 +150,7 @@ class CesiumTool {
 									(point1GeoPosition.height - point2GeoPosition.height)
 							}
 							polyline.positions = plPositions
-							this[addDistanceLabel](
+							this[_addDistanceLabel](
 								point1,
 								point2,
 								labelHeight,
@@ -215,7 +213,7 @@ class CesiumTool {
 								(point1GeoPosition.height - point3GeoPosition.height)
 						}
 						polyline.positions = plPositions
-						this[addDistanceLabel](
+						this[_addDistanceLabel](
 							point1,
 							point3,
 							labelHeight,
@@ -258,7 +256,7 @@ class CesiumTool {
 		})
 		handler.setInputAction(({ position }) => {
 			if (this.viewer.scene.mode !== this.Cesium.SceneMode.MORPHING) {
-				let cartesian = this[getEventInputPosition](position)
+				let cartesian = this[_getEventInputPosition](position)
 				if (this.Cesium.defined(cartesian)) {
 					if (points.length === 2) {
 						points.removeAll()
@@ -396,7 +394,7 @@ class CesiumTool {
 						distanceLabel = this.viewer.entities.add({
 							label: this.label
 						})
-						this[addDistanceLabel](
+						this[_addDistanceLabel](
 							point1,
 							point2,
 							labelZ,
@@ -413,7 +411,7 @@ class CesiumTool {
 		}, this.Cesium.ScreenSpaceEventType.LEFT_CLICK)
 	}
 
-	[addDistanceLabel](
+	[_addDistanceLabel](
 		p1,
 		p2,
 		height,
@@ -427,39 +425,39 @@ class CesiumTool {
 		const ellipsoid = this.Cesium.Ellipsoid.WGS84
 		p1.cartographic = ellipsoid.cartesianToCartographic(p1.position)
 		p2.cartographic = ellipsoid.cartesianToCartographic(p2.position)
-		verticalLabel.label.text = this[getVerticalDistanceString](
+		verticalLabel.label.text = this[_getVerticalDistanceString](
 			point1GeoPosition,
 			point2GeoPosition
 		)
 
 		if (type === 'measureheight') {
 			if (point2GeoPosition.height >= point1GeoPosition.height) {
-				verticalLabel.position = this[getLabelPosition](p2, p2, height)
+				verticalLabel.position = this[_getLabelPosition](p2, p2, height)
 			} else {
-				verticalLabel.position = this[getLabelPosition](p1, p1, height)
+				verticalLabel.position = this[_getLabelPosition](p1, p1, height)
 			}
 			return
 		}
 
 		if (type === 'triangulation') {
-			distanceLabel.label.text = this[getDistanceString](
+			distanceLabel.label.text = this[_getDistanceString](
 				p1,
 				p2,
 				point1GeoPosition,
 				point2GeoPosition
 			)
-			horizontalLabel.label.text = this[getHorizontalDistanceString](p1, p2)
-			distanceLabel.position = this[getLabelPosition](p1, p2, height)
+			horizontalLabel.label.text = this[_getHorizontalDistanceString](p1, p2)
+			distanceLabel.position = this[_getLabelPosition](p1, p2, height)
 			if (point2GeoPosition.height >= point1GeoPosition.height) {
-				verticalLabel.position = this[getLabelPosition](p1, p1, height)
-				horizontalLabel.position = this[getLabelPosition](
+				verticalLabel.position = this[_getLabelPosition](p1, p1, height)
+				horizontalLabel.position = this[_getLabelPosition](
 					p2,
 					p1,
 					point2GeoPosition.height
 				)
 			} else {
-				verticalLabel.position = this[getLabelPosition](p2, p2, height)
-				horizontalLabel.position = this[getLabelPosition](
+				verticalLabel.position = this[_getLabelPosition](p2, p2, height)
+				horizontalLabel.position = this[_getLabelPosition](
 					p1,
 					p2,
 					point1GeoPosition.height
@@ -468,7 +466,7 @@ class CesiumTool {
 		}
 	}
 
-	[getHorizontalDistanceString](p1, p2) {
+	[_getHorizontalDistanceString](p1, p2) {
 		const geodesic = new this.Cesium.EllipsoidGeodesic()
 		// 设置测地线的起点和终点
 		geodesic.setEndPoints(p1.cartographic, p2.cartographic)
@@ -480,7 +478,7 @@ class CesiumTool {
 		return meters + ' м'
 	}
 
-	[getDistanceString](point1, point2, point1GeoPosition, point2GeoPosition) {
+	[_getDistanceString](point1, point2, point1GeoPosition, point2GeoPosition) {
 		const geodesic = new this.Cesium.EllipsoidGeodesic()
 		geodesic.setEndPoints(point1.cartographic, point2.cartographic)
 		const horizontalMeters = geodesic.surfaceDistance.toFixed(2)
@@ -497,7 +495,7 @@ class CesiumTool {
 		return meters.toFixed(2) + ' м'
 	}
 	// 设置垂直label文字
-	[getVerticalDistanceString](p1Geo, p2Geo) {
+	[_getVerticalDistanceString](p1Geo, p2Geo) {
 		const heights = [p1Geo.height, p2Geo.height]
 		const METERS = Math.max.apply(Math, heights) - Math.min.apply(Math, heights)
 		if (METERS >= 1000) {
@@ -509,7 +507,7 @@ class CesiumTool {
 	 * 获取Label的位置
 	 * @return {Cartesian3} Label的位置
 	 **/
-	[getLabelPosition](p1, p2, height) {
+	[_getLabelPosition](p1, p2, height) {
 		const geodesic = new this.Cesium.EllipsoidGeodesic()
 		const scratch = new this.Cesium.Cartographic()
 		geodesic.setEndPoints(p1.cartographic, p2.cartographic)
@@ -525,7 +523,7 @@ class CesiumTool {
 	 * @param {Object} position 输入事件对象中的position
 	 * @return {Cartesian3} 输入事件的位置
 	 **/
-	[getEventInputPosition](position) {
+	[_getEventInputPosition](position) {
 		let cartesian = null
 		const pickedObject = this.viewer.scene.pick(position)
 		if (
@@ -540,4 +538,4 @@ class CesiumTool {
 		return cartesian
 	}
 }
-export default CesiumTool
+module.exports= CesiumTool

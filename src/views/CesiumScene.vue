@@ -3,7 +3,9 @@
 </template>
 <script>
 const Cesium = require('cesium/Cesium')
-import CesiumTool from "./cesiumTool";
+
+const CesiumTool = require('./cesiumTool')
+
 export default {
 	name: 'CesiumScene',
 	data() {
@@ -73,7 +75,7 @@ export default {
 					throw error
 				})
 			const cesiumTool =new CesiumTool(Cesium,viewer)
-			cesiumTool.startTriangulation()
+			cesiumTool.handelMeasure()
 		}
 	}
 }
