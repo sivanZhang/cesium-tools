@@ -812,6 +812,11 @@
     error-stack-parser "^2.0.0"
     string-width "^2.0.0"
 
+"@types/cesium@^1.65.0":
+  version "1.65.0"
+  resolved "https://registry.yarnpkg.com/@types/cesium/-/cesium-1.65.0.tgz#e64f3c5153efd5f0e1213d161e704eb752415bb2"
+  integrity sha512-QxXbKRnNuysfHKBRY54OVGStMUJn518W834II8no+ziezzNyzv37jf+nMNqlo4aX4Q/yabuzd8gdHy5IlLzWBg==
+
 "@types/color-name@^1.1.1":
   version "1.1.1"
   resolved "https://registry.npm.taobao.org/@types/color-name/download/@types/color-name-1.1.1.tgz#1c1261bbeaa10a8055bbc5d8ab84b7b2afc846a0"
