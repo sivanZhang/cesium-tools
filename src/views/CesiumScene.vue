@@ -72,8 +72,8 @@ export default {
 				.otherwise(function(error) {
 					throw error
 				})
-			const cesiumTool =new CesiumTool(Cesium)
-			cesiumTool.handelMeasure()
+			const cesiumTool =new CesiumTool(Cesium,viewer)
+			cesiumTool.startTriangulation()
 		}
 	}
 }

@@ -1,40 +1,37 @@
-// 封装私有方法
+// 设置为私有方法
 const [
 	getVerticalDistanceString,
 	getEventInputPosition,
 	addDistanceLabel,
-	getLabelPosition
+	getLabelPosition,
+	getDistanceString,
+	getHorizontalDistanceString
 ] = [
 	Symbol('getVerticalDistanceString'),
 	Symbol('getEventInputPosition'),
 	Symbol('addDistanceLabel'),
-	Symbol('getLabelPosition')
+	Symbol('getLabelPosition'),
+	Symbol('getDistanceString'),
+	Symbol('getHorizontalDistanceString')
 ]
 class CesiumTool {
 	constructor(Cesium, viewer) {
 		if (!Cesium) {
-			throw new Error('Cesium is not define in cesiumTool.（实例化CesiumTool的时候没有传Cesium类）')
+			throw new Error(
+				'Cesium is not define in cesiumTool.（实例化CesiumTool的时候没有定义Cesium类）'
+			)
 		}
 		if (!viewer) {
-			throw new Error('viewer is not define in cesiumTool.（实例化CesiumTool的时候没有传viewer实例）')
+			throw new Error(
+				'viewer is not define in cesiumTool.（实例化CesiumTool的时候没有定义viewer实例）'
+			)
 		}
 		this.Cesium = Cesium
 		this.viewer = viewer
-    }
-    /**
-	 * 获取输入事件的位置
-	 * @param {Object} position 输入事件对象中的position
-	 * @return {Cartesian3} 输入事件的位置
-	 **/
-	handelMeasure(customlabel) {
-		const handler = new this.Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas)
-		const polylines = this.viewer.scene.primitives.add(
-			new this.Cesium.PolylineCollection()
-		)
-		const points = this.viewer.scene.primitives.add(
-			new this.Cesium.PointPrimitiveCollection()
-		)
-		let label = {
+	}
+	/* default label */
+	get label() {
+		return {
 			font: '14px monospace',
 			showBackground: true,
 			horizontalOrigin: this.Cesium.HorizontalOrigin.CENTER,
@@ -43,7 +40,21 @@ class CesiumTool {
 			eyeOffset: new this.Cesium.Cartesian3(0, 0, -50),
 			fillColor: this.Cesium.Color.WHITE
 		}
-		label = { ...label, customlabel }
+	}
+	/**
+	 * 获取输入事件的位置
+	 * @param {Object} position 输入事件对象中的position
+	 * @return {Cartesian3} 输入事件的位置
+	 **/
+	handelMeasure() {
+		const handler = new this.Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas)
+		const polylines = this.viewer.scene.primitives.add(
+			new this.Cesium.PolylineCollection()
+		)
+		const points = this.viewer.scene.primitives.add(
+			new this.Cesium.PointPrimitiveCollection()
+		)
+
 		let handler2,
 			verticalLabel,
 			circle,
@@ -68,7 +79,7 @@ class CesiumTool {
 					}
 					if (points.length === 0) {
 						verticalLabel = this.viewer.entities.add({
-							label: label
+							label: this.label
 						})
 						circle = this.viewer.entities.add({
 							ellipse: {
@@ -145,6 +156,7 @@ class CesiumTool {
 								point1,
 								point2,
 								labelHeight,
+								'measureheight',
 								point2GeoPosition,
 								point1GeoPosition,
 								verticalLabel
@@ -207,6 +219,7 @@ class CesiumTool {
 							point1,
 							point3,
 							labelHeight,
+							'measureheight',
 							point3GeoPosition,
 							point1GeoPosition,
 							verticalLabel
@@ -216,27 +229,286 @@ class CesiumTool {
 			}
 		}, this.Cesium.ScreenSpaceEventType.LEFT_CLICK)
 	}
-	[addDistanceLabel](p1, p2, height, p1Geo, p2Geo, verticalLabel) {
+	startTriangulation() {
+		let handler = new this.Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas)
+		let points = this.viewer.scene.primitives.add(
+			new this.Cesium.PointPrimitiveCollection()
+		)
+		let polylines = this.viewer.scene.primitives.add(
+			new this.Cesium.PolylineCollection()
+		)
+		let point1,
+			point2,
+			point1GeoPosition,
+			point2GeoPosition,
+			polyline1,
+			polyline2,
+			polyline3,
+			distanceLabel,
+			verticalLabel,
+			horizontalLabel
+
+		let circle = this.viewer.entities.add({
+			ellipse: {
+				material: this.Cesium.Color.WHITE.withAlpha(0.3),
+				show: false,
+				semiMinorAxis: 50,
+				semiMajorAxis: 50
+			}
+		})
+		handler.setInputAction(({ position }) => {
+			if (this.viewer.scene.mode !== this.Cesium.SceneMode.MORPHING) {
+				let cartesian = this[getEventInputPosition](position)
+				if (this.Cesium.defined(cartesian)) {
+					if (points.length === 2) {
+						points.removeAll()
+						polylines.removeAll()
+						this.viewer.entities.remove(distanceLabel)
+						this.viewer.entities.remove(horizontalLabel)
+						this.viewer.entities.remove(verticalLabel)
+					}
+					//add first point
+					if (points.length === 0) {
+						circle.show = false
+						point1 = points.add({
+							position: cartesian,
+							color: this.Cesium.Color.RED
+						})
+					} // add second point and lines
+					else if (points.length === 1) {
+						circle.show = true
+						point2 = points.add({
+							position: cartesian,
+							color: this.Cesium.Color.RED
+						})
+						// 点的笛卡尔坐标转换为制图坐标。
+						point1GeoPosition = this.Cesium.Cartographic.fromCartesian(
+							point1.position
+						)
+						point2GeoPosition = this.Cesium.Cartographic.fromCartesian(
+							point2.position
+						)
+
+						// 三根线的两点位置
+						let pl1Positions = [point1.position, point2.position]
+						let pl2Positions = []
+						let pl3Positions = []
+						let labelZ
+						if (point2GeoPosition.height >= point1GeoPosition.height) {
+							pl2Positions = [
+								point2.position,
+								new this.Cesium.Cartesian3.fromRadians(
+									point1GeoPosition.longitude,
+									point1GeoPosition.latitude,
+									point2GeoPosition.height
+								)
+							]
+
+							pl3Positions = [
+								point1.position,
+								new this.Cesium.Cartesian3.fromRadians(
+									point1GeoPosition.longitude,
+									point1GeoPosition.latitude,
+									point2GeoPosition.height
+								)
+							]
+
+							circle.position = point2.position
+							circle.ellipse.height = point2GeoPosition.height
+							circle.ellipse.show = true
+							labelZ =
+								point1GeoPosition.height +
+								(point2GeoPosition.height - point1GeoPosition.height) /
+									2.0
+						} else {
+							pl2Positions = [
+								point1.position,
+								new this.Cesium.Cartesian3.fromRadians(
+									point2GeoPosition.longitude,
+									point2GeoPosition.latitude,
+									point1GeoPosition.height
+								)
+							]
+							pl3Positions = [
+								point2.position,
+								new this.Cesium.Cartesian3.fromRadians(
+									point2GeoPosition.longitude,
+									point2GeoPosition.latitude,
+									point1GeoPosition.height
+								)
+							]
+
+							circle.position = point1.position
+							circle.ellipse.height = point1GeoPosition.height
+							circle.ellipse.show = true
+							labelZ =
+								point2GeoPosition.height +
+								(point1GeoPosition.height - point2GeoPosition.height) /
+									2.0
+						}
+
+						polyline1 = polylines.add({
+							show: true,
+							positions: pl1Positions,
+							width: 2,
+							material: new this.Cesium.Material({
+								fabric: {
+									type: 'Color',
+									uniforms: {
+										color: this.Cesium.Color.BURLYWOOD
+									}
+								}
+							})
+						})
+						polyline2 = polylines.add({
+							show: true,
+							positions: pl2Positions,
+							width: 1,
+							material: new this.Cesium.Material({
+								fabric: {
+									type: 'PolylineDash',
+									uniforms: {
+										color: this.Cesium.Color.BURLYWOOD
+									}
+								}
+							})
+						})
+						polyline3 = polylines.add({
+							show: true,
+							positions: pl3Positions,
+							width: 1,
+							material: new this.Cesium.Material({
+								fabric: {
+									type: 'PolylineDash',
+									uniforms: {
+										color: this.Cesium.Color.BURLYWOOD
+									}
+								}
+							})
+						})
+
+						verticalLabel = this.viewer.entities.add({
+							label: this.label
+						})
+						horizontalLabel = this.viewer.entities.add({
+							label: this.label
+						})
+						distanceLabel = this.viewer.entities.add({
+							label: this.label
+						})
+						this[addDistanceLabel](
+							point1,
+							point2,
+							labelZ,
+							'triangulation',
+							point1GeoPosition,
+							point2GeoPosition,
+							verticalLabel,
+							horizontalLabel,
+							distanceLabel
+						)
+					}
+				}
+			}
+		}, this.Cesium.ScreenSpaceEventType.LEFT_CLICK)
+	}
+
+	[addDistanceLabel](
+		p1,
+		p2,
+		height,
+		type,
+		point1GeoPosition,
+		point2GeoPosition,
+		verticalLabel,
+		horizontalLabel,
+		distanceLabel
+	) {
 		const ellipsoid = this.Cesium.Ellipsoid.WGS84
 		p1.cartographic = ellipsoid.cartesianToCartographic(p1.position)
 		p2.cartographic = ellipsoid.cartesianToCartographic(p2.position)
-		verticalLabel.label.text = this[getVerticalDistanceString](p1Geo, p2Geo)
-		if (p2Geo.height >= p1Geo.height) {
-			verticalLabel.position = this[getLabelPosition](p2, p2, height)
-		} else {
-			verticalLabel.position = this[getLabelPosition](p1, p1, height)
+		verticalLabel.label.text = this[getVerticalDistanceString](
+			point1GeoPosition,
+			point2GeoPosition
+		)
+
+		if (type === 'measureheight') {
+			if (point2GeoPosition.height >= point1GeoPosition.height) {
+				verticalLabel.position = this[getLabelPosition](p2, p2, height)
+			} else {
+				verticalLabel.position = this[getLabelPosition](p1, p1, height)
+			}
+			return
+		}
+
+		if (type === 'triangulation') {
+			distanceLabel.label.text = this[getDistanceString](
+				p1,
+				p2,
+				point1GeoPosition,
+				point2GeoPosition
+			)
+			horizontalLabel.label.text = this[getHorizontalDistanceString](p1, p2)
+			distanceLabel.position = this[getLabelPosition](p1, p2, height)
+			if (point2GeoPosition.height >= point1GeoPosition.height) {
+				verticalLabel.position = this[getLabelPosition](p1, p1, height)
+				horizontalLabel.position = this[getLabelPosition](
+					p2,
+					p1,
+					point2GeoPosition.height
+				)
+			} else {
+				verticalLabel.position = this[getLabelPosition](p2, p2, height)
+				horizontalLabel.position = this[getLabelPosition](
+					p1,
+					p2,
+					point1GeoPosition.height
+				)
+			}
 		}
 	}
-	// 设置label文字
+
+	[getHorizontalDistanceString](p1, p2) {
+		const geodesic = new this.Cesium.EllipsoidGeodesic()
+		// 设置测地线的起点和终点
+		geodesic.setEndPoints(p1.cartographic, p2.cartographic)
+		// 获取起点和终点之间的表面距离
+		const meters = geodesic.surfaceDistance.toFixed(2)
+		if (meters >= 1000) {
+			return (meters / 1000).toFixed(2) + ' км'
+		}
+		return meters + ' м'
+	}
+
+	[getDistanceString](point1, point2, point1GeoPosition, point2GeoPosition) {
+		const geodesic = new this.Cesium.EllipsoidGeodesic()
+		geodesic.setEndPoints(point1.cartographic, point2.cartographic)
+		const horizontalMeters = geodesic.surfaceDistance.toFixed(2)
+		const heights = [point1GeoPosition.height, point2GeoPosition.height]
+		const verticalMeters =
+			Math.max.apply(Math, heights) - Math.min.apply(Math, heights)
+		const meters = Math.pow(
+			Math.pow(horizontalMeters, 2) + Math.pow(verticalMeters, 2),
+			0.5
+		)
+		if (meters >= 1000) {
+			return (meters / 1000).toFixed(2) + ' км'
+		}
+		return meters.toFixed(2) + ' м'
+	}
+	// 设置垂直label文字
 	[getVerticalDistanceString](p1Geo, p2Geo) {
 		const heights = [p1Geo.height, p2Geo.height]
 		const METERS = Math.max.apply(Math, heights) - Math.min.apply(Math, heights)
 		if (METERS >= 1000) {
-			return `高度差：${(METERS / 1000).toFixed(2)} км`
+			return `${(METERS / 1000).toFixed(2)} км`
 		}
-		return `高度差：${METERS.toFixed(2)} м`
+		return `${METERS.toFixed(2)} м`
 	}
-
+	/**
+	 * 获取Label的位置
+	 * @return {Cartesian3} Label的位置
+	 **/
 	[getLabelPosition](p1, p2, height) {
 		const geodesic = new this.Cesium.EllipsoidGeodesic()
 		const scratch = new this.Cesium.Cartographic()
@@ -245,7 +517,7 @@ class CesiumTool {
 		return this.Cesium.Cartesian3.fromRadians(
 			midpointCartographic.longitude,
 			midpointCartographic.latitude,
-			height + 10
+			height
 		)
 	}
 	/**
