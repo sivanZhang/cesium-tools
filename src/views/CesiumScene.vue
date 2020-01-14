@@ -1,15 +1,24 @@
 <template>
-	<div id="cesiumContainer"></div>
+	<div id="cesiumContainer">
+		<div>
+			<!-- <button @click="startHeight">高度测量</button>
+			<button @click="startTriangle">三角测量</button> -->
+			<button @click="startEarthwork">开始测方</button>
+			<!-- <button @click="cancel">退出测量</button> -->
+		</div>
+	</div>
 </template>
 <script>
 const Cesium = require('cesium/Cesium')
 
-const CesiumTool = require('./cesiumTool')
-
+import { RangingTool, DigFill } from './cesiumTool'
 export default {
 	name: 'CesiumScene',
 	data() {
-		return {}
+		return {
+			rangingTool: null,
+			DigFill: null
+		}
 	},
 	mounted() {
 		this.init()
@@ -74,8 +83,20 @@ export default {
 				.otherwise(function(error) {
 					throw error
 				})
-			const cesiumTool =new CesiumTool(Cesium,viewer)
-			cesiumTool.handelMeasure()
+			// this.rangingTool =new RangingTool(Cesium,viewer)
+			this.DigFill = new DigFill(Cesium, viewer)
+		},
+		// cancel(){
+		// 	this.rangingTool.clearAll()
+		// },
+		// startHeight(){
+		// 	this.rangingTool.startMeasureHeight()
+		// },
+		// startTriangle(){
+		// 	this.rangingTool.startTriangulation()
+		// },
+		startEarthwork() {
+			this.DigFill.start()
 		}
 	}
 }
