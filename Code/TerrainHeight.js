@@ -129,13 +129,13 @@ class TerrainHeight {
             });
         }
     }
-
+/* ------------------------------------------------------------------------ */
     static getRectangleMatrix(obj, onSuccess, onFail) {
-        //  粒度
+        //  粒度 =度数？
         let granularity = (obj.granularity !== undefined && obj.granularity !== null) ? obj.granularity : 0.00001;
         
         
-        // 把包装盒划分为设定粒度的小方格
+        // 把包装盒划分为 网格
         const rectangleMatrix = TerrainHeight.generateMatix(obj.Polygon.rectangle, granularity); // obj.Polygon.rectangle = array(4 x number)
 
         // 去除包装盒边界到多边形边界的方格
@@ -217,10 +217,12 @@ class TerrainHeight {
                 startLat += granularity;
             }
         }
+        // 经纬度抽象的点的二维数组
         let ret = [];
         for (let i = 0; i < lonArray.length; i++) {
             let tmp = [];
             for (let j = 0; j < latArray.length; j++) {
+                // 经纬度抽象的点
                 tmp.push(new Point(lonArray[i], latArray[j], 0));
             }
             ret.push(tmp);

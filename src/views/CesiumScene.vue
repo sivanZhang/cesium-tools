@@ -1,9 +1,10 @@
 <template>
 	<div id="cesiumContainer">
 		<div>
-			<!-- <button @click="startHeight">高度测量</button>
-			<button @click="startTriangle">三角测量</button> -->
+			<!-- <button @click="startHeight">高度测量</button>-->
+			<!-- <button @click="startTriangle">三角测量</button>  -->
 			<button @click="startEarthwork">开始测方</button>
+			<input type="number" v-model="height" />
 			<!-- <button @click="cancel">退出测量</button> -->
 		</div>
 	</div>
@@ -17,7 +18,8 @@ export default {
 	data() {
 		return {
 			rangingTool: null,
-			DigFill: null
+			DigFill: null,
+			height: 300
 		}
 	},
 	mounted() {
@@ -84,7 +86,7 @@ export default {
 					throw error
 				})
 			// this.rangingTool =new RangingTool(Cesium,viewer)
-			this.DigFill = new DigFill(Cesium, viewer)
+			this.DigFill = new DigFill(Cesium, viewer, this.height)
 		},
 		// cancel(){
 		// 	this.rangingTool.clearAll()

@@ -204,6 +204,7 @@ class EarthWork extends MouseHandler {
                     this.positions.push(position);
                     this.currentPointEntity.push(new Billboard({position: position}));
                 }
+                //this.positions  cartesion
                 this.calculateEarthwork();
             }
             this.end(this.positions.length <= 2);
@@ -211,6 +212,7 @@ class EarthWork extends MouseHandler {
     }
     // 返回matrix 并且执行onSuccess
     calculateEarthwork() {
+        // jin
         let tmpPolygon = new Polygon(Coordinate.CartesianArrayToCartographicArray(this.positions));
         TerrainHeight.getRectangleMatrix({
             granularity: this.granularity,
@@ -274,18 +276,6 @@ class EarthWork extends MouseHandler {
             fillAmount: (fillArea * avgFillHeight),
             digAmount: (digArea * avgDigHeight)
         }
-    }
-
-    static loadRectange(cartographicArray) {
-        let maxLon, maxLat = -Infinity;
-        let minLon, minLat = Infinity;
-        for (let i = 0; i < cartographicArray.length; i++) {
-            maxLon = Math.max(cartographicArray[i].longitude);
-            maxLat = Math.max(cartographicArray[i].latitude);
-            minLon = Math.min(cartographicArray[i].longitude);
-            minLat = Math.min(cartographicArray[i].latitude);
-        }
-        return [minLon, minLat, maxLon, maxLat];
     }
 
     static testSame(target, origin) {

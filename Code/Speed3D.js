@@ -3221,7 +3221,8 @@ class Material {
         if (config.url !== undefined && config.url !== null && config.url !== '') {
             return config.url;
         };
-        if (config.style === 'Grid') {
+ }
+        iffig.style === 'Grid') {
             return new _Constants_js__WEBPACK_IMPORTED_MODULE_0__["dependence"].Cesium.GridMaterialProperty({
                 color: _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_1__["SpeedColor"].hex2CesiumColor(config.color),
                 cellAlpha: config.cellAlpha ? config.cellAlpha : 0.1,
@@ -9280,20 +9281,21 @@ class Globe extends _Event_Event_js__WEBPACK_IMPORTED_MODULE_9__["Event"] {
                             }
                         }
                     };
-                });
-
+ }
+                }
                 techniques.forEach(function (t) {
                     for (let attribute in t.attributes) {
                         let name = t.attributes[attribute];
                         t.attributes[attribute] = t.parameters[name];
                     };
+}
 
-                    for (let uniform in t.uniforms) {
+                    for uniform in t.uniforms) {
                         let name = t.uniforms[uniform];
                         t.uniforms[uniform] = t.parameters[name];
                     };
-                });
-            }
+ }
+                }           }
         };
         try {
             Object.defineProperties(_Constants_js__WEBPACK_IMPORTED_MODULE_0__["dependence"].Cesium.Model.prototype, {
@@ -14235,8 +14237,8 @@ class ProfileAnalysis extends _Function_js__WEBPACK_IMPORTED_MODULE_0__["Functio
         let element = document.getElementById(this.bindElment);
         if (element) {
             element.innerHTML = this.pendingMessage;;
-        }
-        this.handler.destroy();
+ ;
+        }     this.handler.destroy();
         this.positions = [];
         if (this.supportLine !== null) {
             this.supportLine.destroy();
@@ -17079,13 +17081,22 @@ class Polygon {
 
     /**
      * 判定点是否在此多边形内
-     * @param {Point} otherPoint
+     * @param {Point} otherPoint //?等于一个经纬度加高的对象
      * @return {boolean}
      */
     contains(otherPoint) {
+        // 是否为顶点
         if (this.isVertix(otherPoint)) return true;
         let flag = false;
+        // 抽象多边形.3 -1 <3
         for (let i = 0, l = this.position.length, j = l - 1; i < l; j = i, i++) {
+            // （顶点纬度<参数的纬度 && 顶点上一点纬度>=参数的纬度 || 顶点纬度>=参数的纬度 && 顶点上一点纬度<参数的纬度）
+            //  line2  :   变量经度 = 顶点经度+（参数的纬度 - 顶点纬度） * （顶点上一点经度 - 顶点经度）/(顶点上一点的纬度 -顶点纬度)
+            //line3： （“变量经度” === 参数的经度）返回true
+            // 
+            //（“变量经度”> 参数的经度）flag = !flag;
+            //
+
             if (this.position[i].latitude < otherPoint.latitude && this.position[j].latitude >= otherPoint.latitude || this.position[i].latitude >= otherPoint.latitude && this.position[j].latitude < otherPoint.latitude) {
                 let longitude = this.position[i].longitude + (otherPoint.latitude - this.position[i].latitude) * (this.position[j].longitude - this.position[i].longitude) / (this.position[j].latitude - this.position[i].latitude);
 
@@ -22131,13 +22142,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TileServiceWithTime", function() { return TileServiceWithTime; });
 /* harmony import */ var _Constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var _Core_Entity_Clock_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(96);
-;
+;;
+
 
 
 
 //多时相处理
 
-class TileServiceWithTime {
+classServiceWithTime {
     constructor(config) {
         this.viewer = _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer;
         this.clock = new _Core_Entity_Clock_js__WEBPACK_IMPORTED_MODULE_1__["Clock"]();
@@ -25868,8 +25880,8 @@ class Profile extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["MouseHandle
         let element = document.getElementById(this.bindElment);
         if (element) {
             element.innerHTML = this.pendingMessage;;
-        }
-        this.destroy();
+ ;
+        }     this.destroy();
         this.positions = [];
         if (this.supportLine !== null) {
             this.supportLine.destroy();

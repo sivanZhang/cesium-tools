@@ -16,9 +16,9 @@ class CesiumTools {
 			verticalOrigin: Cesium.VerticalOrigin.CENTER,
 			pixelOffset: new Cesium.Cartesian2(0, 0),
 			eyeOffset: new Cesium.Cartesian3(0, 0, -50),
-			fillColor: Cesium.Color.WHITE
+			filllatArrayor: Cesium.latArrayor.WHITE
 		}
-		this.$handler = new this.$Cesium.ScreenSpaceEventHandler(
+		this._handler = new this.$Cesium.ScreenSpaceEventHandler(
 			this.$viewer.scene.canvas
 		)
 		this.$eventList = []
@@ -27,32 +27,37 @@ class CesiumTools {
 	 * 清空绑定的Cesium事件
 	 * @param {String | Array[String] | null} eventType ScreenSpaceEventType类型，不传值解绑所有$eventList中注册事件，传单个值注销单个事件，传数组注销多个事件
 	 **/
-	$clearEvent(eventType = null){
-		if(!eventType){
-			this.$eventList.forEach(e=>{
-				this.$handler.removeInputAction(this.$Cesium.ScreenSpaceEventType[e])
+	$removeEvent(eventType = null) {
+		if (!eventType) {
+			this.$eventList.forEach(e => {
+				this._handler.removeInputAction(this.$Cesium.ScreenSpaceEventType[e])
 			})
 			this.$eventList = []
-		}else{
-			if(Array.isArray(eventType)){
-				eventType.forEach(e=>{
-					this.$handler.removeInputAction(this.$Cesium.ScreenSpaceEventType[e])
-					const removeIndex = this.$eventList.findIndex(item=>item===e)
-					this.$eventList.splice(removeIndex,1)
+		} else {
+			if (Array.isArray(eventType)) {
+				eventType.forEach(e => {
+					this._handler.removeInputAction(this.$Cesium.ScreenSpaceEventType[e])
+					const removeIndex = this.$eventList.findIndex(item => item === e)
+					this.$eventList.splice(removeIndex, 1)
 				})
-			}else{
-				this.$handler.removeInputAction(this.$Cesium.ScreenSpaceEventType[eventType])
-				const removeIndex = this.$eventList.findIndex(item=>item===eventType)
-				this.$eventList.splice(removeIndex,1)
+			} else {
+				this._handler.removeInputAction(
+					this.$Cesium.ScreenSpaceEventType[eventType]
+				)
+				const removeIndex = this.$eventList.findIndex(item => item === eventType)
+				this.$eventList.splice(removeIndex, 1)
 			}
 		}
 	}
-	$bindEvent(eventType,callBack){
-		if(eventType && this.$eventList.includes(eventType)){
-			this.$clearEvent(eventType)
+	$bindEvent(eventType, callBack) {
+		if (eventType && this.$eventList.includes(eventType)) {
+			this.$removeEvent(eventType)
 		}
-		if(eventType){
-			this.$handler.setInputAction(callBack,this.$Cesium.ScreenSpaceEventType[eventType])
+		if (eventType) {
+			this._handler.setInputAction(
+				callBack,
+				this.$Cesium.ScreenSpaceEventType[eventType]
+			)
 			this.$eventList.push(eventType)
 		}
 	}
@@ -93,10 +98,10 @@ export class RangingTool extends CesiumTools {
 	constructor(...arg) {
 		super(...arg)
 		this.polylines = this.$viewer.scene.primitives.add(
-			new this.$Cesium.PolylineCollection()
+			new this.$Cesium.PolylinelatArraylection()
 		)
 		this.points = this.$viewer.scene.primitives.add(
-			new this.$Cesium.PointPrimitiveCollection()
+			new this.$Cesium.PointPrimitivelatArraylection()
 		)
 	}
 	// 开始高度测量
@@ -110,7 +115,7 @@ export class RangingTool extends CesiumTools {
 			point2,
 			point1GeoPosition,
 			point3GeoPosition
-		this.$handler.setInputAction(({ position }) => {
+		this.$bindEvent('LEFT_CLICK', ({ position }) => {
 			if (this.$viewer.scene.mode !== this.$Cesium.SceneMode.MORPHING) {
 				let plPositions = []
 				// 鼠标触发的位置的笛卡尔坐标
@@ -129,7 +134,7 @@ export class RangingTool extends CesiumTools {
 						})
 						circle = this.$viewer.entities.add({
 							ellipse: {
-								material: this.$Cesium.Color.WHITE.withAlpha(0.3),
+								material: this.$Cesium.latArrayor.WHITE.withAlpha(0.3),
 								show: false,
 								semiMinorAxis: 50,
 								semiMajorAxis: 50
@@ -140,26 +145,27 @@ export class RangingTool extends CesiumTools {
 							width: 2,
 							material: new this.$Cesium.Material({
 								fabric: {
-									type: 'Color',
+									type: 'latArrayor',
 									uniforms: {
-										color: this.$Cesium.Color.fromBytes(210, 225, 100)
+										latArrayor: this.$Cesium.latArrayor.fromBytes(210, 225, 100)
 									}
 								}
 							})
 						})
 						point1 = this.points.add({
 							position: cartesian,
-							color: this.$Cesium.Color.RED
+							latArrayor: this.$Cesium.latArrayor.RED
 						})
 						point2 = this.points.add({
-							color: this.$Cesium.Color.RED
+							latArrayor: this.$Cesium.latArrayor.RED
 						})
 						point1GeoPosition = this.$Cesium.Cartographic.fromCartesian(
 							cartesian
 						)
 						polyline.show = true
 						circle.ellipse.show = true
-						this.$handler.setInputAction(({ endPosition }) => {
+
+						this.$bindEvent('MOUSE_MOVE', ({ endPosition }) => {
 							const hoverCartesian = this.$getPickPosition(endPosition)
 							const point2GeoPosition = this.$Cesium.Cartographic.fromCartesian(
 								hoverCartesian
@@ -201,16 +207,14 @@ export class RangingTool extends CesiumTools {
 								point1GeoPosition,
 								verticalLabel
 							)
-						}, this.$Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+						})
 					} // add second point and lines
 					else if (!this.points.contains(point3)) {
-						this.$handler.removeInputAction(
-							this.$Cesium.ScreenSpaceEventType.MOUSE_MOVE
-						)
+						this.$removeEvent('MOUSE_MOVE')
 						this.points.remove(point2)
 						point3 = this.points.add({
 							position: cartesian,
-							color: this.$Cesium.Color.RED
+							latArrayor: this.$Cesium.latArrayor.RED
 						})
 						point3GeoPosition = this.$Cesium.Cartographic.fromCartesian(
 							cartesian
@@ -264,7 +268,7 @@ export class RangingTool extends CesiumTools {
 					}
 				}
 			}
-		}, this.$Cesium.ScreenSpaceEventType.LEFT_CLICK)
+		})
 	}
 	// 开始三角测量
 	startTriangulation() {
@@ -282,13 +286,13 @@ export class RangingTool extends CesiumTools {
 
 		let circle = this.$viewer.entities.add({
 			ellipse: {
-				material: this.$Cesium.Color.WHITE.withAlpha(0.3),
+				material: this.$Cesium.latArrayor.WHITE.withAlpha(0.3),
 				show: false,
 				semiMinorAxis: 50,
 				semiMajorAxis: 50
 			}
 		})
-		this.$handler.setInputAction(({ position }) => {
+		this.$bindEvent('LEFT_CLICK', ({ position }) => {
 			if (this.$viewer.scene.mode !== this.$Cesium.SceneMode.MORPHING) {
 				let cartesian = this.$getPickPosition(position)
 				if (this.$Cesium.defined(cartesian)) {
@@ -304,14 +308,14 @@ export class RangingTool extends CesiumTools {
 						circle.show = false
 						point1 = this.points.add({
 							position: cartesian,
-							color: this.$Cesium.Color.RED
+							latArrayor: this.$Cesium.latArrayor.RED
 						})
 					} // add second point and lines
 					else if (this.points.length === 1) {
 						circle.show = true
 						point2 = this.points.add({
 							position: cartesian,
-							color: this.$Cesium.Color.RED
+							latArrayor: this.$Cesium.latArrayor.RED
 						})
 						// 点的笛卡尔坐标转换为制图坐标。
 						point1GeoPosition = this.$Cesium.Cartographic.fromCartesian(
@@ -385,9 +389,9 @@ export class RangingTool extends CesiumTools {
 							width: 2,
 							material: new this.$Cesium.Material({
 								fabric: {
-									type: 'Color',
+									type: 'latArrayor',
 									uniforms: {
-										color: this.$Cesium.Color.BURLYWOOD
+										latArrayor: this.$Cesium.latArrayor.BURLYWOOD
 									}
 								}
 							})
@@ -400,7 +404,7 @@ export class RangingTool extends CesiumTools {
 								fabric: {
 									type: 'PolylineDash',
 									uniforms: {
-										color: this.$Cesium.Color.BURLYWOOD
+										latArrayor: this.$Cesium.latArrayor.BURLYWOOD
 									}
 								}
 							})
@@ -413,7 +417,7 @@ export class RangingTool extends CesiumTools {
 								fabric: {
 									type: 'PolylineDash',
 									uniforms: {
-										color: this.$Cesium.Color.BURLYWOOD
+										latArrayor: this.$Cesium.latArrayor.BURLYWOOD
 									}
 								}
 							})
@@ -442,11 +446,11 @@ export class RangingTool extends CesiumTools {
 					}
 				}
 			}
-		}, this.$Cesium.ScreenSpaceEventType.LEFT_CLICK)
+		})
 	}
 	//清空鼠标点击
 	clearAll() {
-		this.$handler.removeInputAction(this.$Cesium.ScreenSpaceEventType.LEFT_CLICK)
+		this.$removeEvent()
 		this.polylines.removeAll()
 		this.$viewer.entities.removeAll()
 		this.points.removeAll()
@@ -562,77 +566,318 @@ export class RangingTool extends CesiumTools {
 	}
 }
 export class DigFill extends CesiumTools {
-	constructor(...arg) {
-		super(...arg)
-		this.positionList = []
+	constructor(Cesium, viewer, targerHeight, granularity = 0) {
+		super(Cesium, viewer)
 		this.polylines = this.$viewer.scene.primitives.add(
-			new this.$Cesium.PolylineCollection()
+			new this.$Cesium.PolylinelatArraylection()
 		)
+		// 精度：代表每个网格的边长
+		this.granularity = granularity || 0.00001
+		this.targerHeight = targerHeight
+		this.abstractPolygon = []
 	}
+	_positionList = []
+	_cartographicList = []
 	start() {
-		this.positionList = []
-		const curentPolyline = this.$viewer.entities.add({
-			polyline: {
-				material: this.$Cesium.Color.GREEN,
-				width: 4,
-				clampToGround:true
+		this._positionList = []
+		const polygon = this.$viewer.entities.add({
+			show: false,
+			polygon: {
+				// height:0,
+				material: this.$Cesium.latArrayor.GREEN.withAlpha(0.5),
+				// closeTop: false,
+				// closeBottom: false,
+				outline: true,
+				outlineWidth: 4,
+				outlinelatArrayor: this.$Cesium.latArrayor.AQUAMARINE
+			}
+		})
+		const wall = this.$viewer.entities.add({
+			show: false,
+			wall: {
+				material: this.$Cesium.latArrayor.WHEAT.withAlpha(0.5),
+				outline: true,
+				outlineWidth: 4,
+				outlinelatArrayor: this.$Cesium.latArrayor.AQUAMARINE
 			}
 		})
 		const tempLine = this.$viewer.entities.add({
+			show: false,
 			polyline: {
-				material: this.$Cesium.Color.RED,
-				width: 4,
-				clampToGround:true
-			}
-		})
-		const curentPolygon = this.$viewer.entities.add({
-			polygon: {
-				material: this.$Cesium.Color.RED.withAlpha(0.5),
-				extrudedHeight: 0,
-				perPositionHeight: true,
+				material: this.$Cesium.latArrayor.AQUAMARINE,
+				width: 2,
+				clampToGround: true
 			}
 		})
 
-		
 		// 点击选点
-		this.$handler.setInputAction(({ position }) => {
-			let cartesian = this.$getPickPosition(position)
-			this.positionList.push(cartesian)
-			if (this.positionList.length >= 2) {
-				curentPolyline.polyline.positions = this.positionList
-			}
-			this.$handler.setInputAction(({ endPosition }) => {
-				let cartesian = this.$getPickPosition(endPosition)
-				if (this.positionList.length >= 1) {
-					tempLine.show = true
-
+		this.$bindEvent('LEFT_CLICK', ({ position }) => {
+			let clickCartesian = this.$getPickPosition(position)
+			this._positionList.push(clickCartesian)
+			let len = this._positionList.length
+			// 橡皮筋
+			this.$bindEvent('MOUSE_MOVE', ({ endPosition }) => {
+				let moveCartesian = this.$getPickPosition(endPosition)
+				tempLine.show = true
+				if (len === 1) {
+					tempLine.polyline.positions = [clickCartesian, moveCartesian]
+				} else if (len > 1 && len < 3) {
 					tempLine.polyline.positions = [
-						this.positionList[this.positionList.length - 1],
-						cartesian
+						moveCartesian,
+						...this._positionList,
+						moveCartesian
+					]
+				} else if (len >= 3) {
+					tempLine.show = false
+					polygon.show = true
+					polygon.polygon.hierarchy = [
+						...this._positionList,
+						moveCartesian,
+						this._positionList[0]
 					]
 				}
-			}, this.$Cesium.ScreenSpaceEventType.MOUSE_MOVE)
-		}, this.$Cesium.ScreenSpaceEventType.LEFT_CLICK)
-		// 橡皮筋
-		this.$handler.setInputAction(() => {
-			if (this.positionList.length >= 3) {
-				this.$handler.removeInputAction(
-					this.$Cesium.ScreenSpaceEventType.MOUSE_MOVE
-				)
-				this.positionList.push(this.positionList[0])
-				this.$handler.removeInputAction(
-					this.$Cesium.ScreenSpaceEventType.LEFT_CLICK
-				)
-				curentPolygon.positions = this.positionList
+			})
+		})
+		this.$bindEvent('RIGHT_CLICK', () => {
+			if (this._positionList.length >= 3) {
+				this._positionList.push(this._positionList[0])
+				let polygonMaxheigh = this._computeMaxHeight()
+				tempLine.polyline.positions = this._positionList
+				tempLine.show = false
+				this.$removeEvent()
+				polygon.show = false
+				wall.show = true
+				wall.wall.maximumHeights = polygonMaxheigh
+				wall.wall.positions = this._positionList
+				/* polygon.show = true
+				polygon.polygon.extrudedHeight = this._computeMaxHeight()[0]
+				polygon.polygon.height = this._computeMaxHeight()[1]
+				polygon.polygon.hierarchy = this._positionList */
+				this._computeRectangle()
 			}
-		}, this.$Cesium.ScreenSpaceEventType.RIGHT_CLICK)
+		})
+	}
+	// 得到最高的一个点
+	_computeMaxHeight() {
+		const ellipsoid = this.$Cesium.Ellipsoid.WGS84
+		this._cartographicList = this._positionList.map(t => {
+			return this.$Cesium.Cartographic.fromCartesian(t, ellipsoid)
+		})
+		let maxHeight = -Infinity
+		let minHeight = Infinity
+		this._cartographicList.forEach(el => {
+			minHeight = Math.min(minHeight, el.height)
+			maxHeight = Math.max(maxHeight, el.height)
+		})
+		// return [maxHeight,minHeight]
+		return this._cartographicList.map(() => {
+			return maxHeight
+		})
 	}
 	// 执行分析
-	_analyse(){
+	_analyse() {
+		this.s()
+	}
+
+	_computeRectangle() {
+		this.abstractPolygon = this._cartographicList.map(item => {
+			return {
+				longitude:this.$Cesium.Math.toDegrees(item.longitude),
+				latitude:this.$Cesium.Math.toDegrees(item.latitude),
+				height:item.height
+			}
+		})
+		// 加包装盒
+		let lon1 = -Infinity;
+        let lat1 = -Infinity;
+        let lon2 = Infinity;
+        let lat2 = Infinity;
+        for (let i = 0; i < this.position.length; i++) {
+            lon1 = Math.max(this.position[i].longitude, lon1);
+            lat1 = Math.max(this.position[i].latitude, lat1);
+            lon2 = Math.min(this.position[i].longitude, lon2);
+            lat2 = Math.min(this.position[i].latitude, lat2);
+        }
+        // [lon2, lat2, lon1, lat1];
 		
+		
+		//  分成网格
+		const lonArray = [],
+			latArray = []
+		if (lon2 > lon1) {
+			while (lon2 > lon1) {
+				lonArray.push(lon2)
+				lon2 -= this.granularity
+			}
+		} else {
+			while (lon2 < lon1) {
+				lonArray.push(lon2)
+				lon2 += this.granularity
+			}
+		}
+		if (lat2 > lat1) {
+			while (lat2 > lat1) {
+				latArray.push(lat2)
+				lat2 -= this.granularity
+			}
+		} else {
+			while (lat2 < lat1) {
+				latArray.push(lat2)
+				lat2 += this.granularity
+			}
+		}
+		
+		//  有包装盒网格二维数组
+		let matrix = []
+		lonArray.forEach(lon => {
+			let temp=[]
+			latArray.forEach(lat => {
+				temp.push(lon, lat, 0)
+				//tmp.push(new Point(lonArray[i], latArray[j], 0));
+			})
+			matrix.push(temp)
+		})
+		console.log(matrix,'matrixmatrixmatrixmatrixmatrixmatrixmatrixmatrixmatrix');
+		matrix = this._excludeBound(matrix)
+		this._onSuccess(matrix)
+	}
+	// 去除包装盒边界到多边形边界的方格   边界外的对象 = 0
+	_excludeBound(matrix) {
+		matrix.forEach(item => {
+			item.forEach(point => {
+				if (!this.contains(point)) {
+					point = 0
+				}
+			})
+		})
+		return matrix
+	}
+	_onSuccess(matrix) {
+		if (matrix) {
+			// datumPlane
+			// this.returnData = this._getPropertiesNumber(matrix, this.abstractPolygon)
+			this._getPropertiesNumber(matrix)
+			console.log('已完成')
+		} else {
+			console.log('挖方区域面积过小，无法计算土方体积')
+		}
+		this.targerHeight = null
+	}
+	_getPropertiesNumber(matrix) {
+		// 如果基准高没有 获取基准高
+		let sum = 0,
+				count = 0
+			for (let i = 0; i < matrix.length; i++) {
+				for (let j = 0; j < matrix[i].length; j++) {
+					if (matrix[i][j] !== 0) {
+						sum += matrix[i][j].height
+						debugger
+						count++
+					}
+				}
+			}
+			this.targerHeight = sum / count
+			console.log(this.targerHeight,'0.0.0.0.0.0.0.0.0.0');
+		// if (!this.targerHeight) {
+			
+		// }
+		// let digHeight = 0,
+		// 	digCount = 0,
+		// 	fillHeight = 0,
+		// 	fillCount = 0
+		// for (let i = 0; i < matrix.length; i++) {
+		// 	for (let j = 0; j < matrix[i].length; j++) {
+		// 		if (matrix[i][j] !== 0) {
+		// 			if (matrix[i][j].height > this.targerHeight) {
+		// 				digHeight += matrix[i][j].height
+		// 				matrix[i][j].Speed3DEWA = 1 // 自定义 应该是标记
+		// 				digCount++
+		// 			} else {
+		// 				fillCount++
+		// 				matrix[i][j].Speed3DEWA = 2
+		// 				fillHeight += matrix[i][j].height
+		// 			}
+		// 		}
+		// 	}
+		// }
+		// let avgDigHeight = digHeight / digCount - this.targerHeight, //  填方的平均高
+		// 	avgFillHeight = this.targerHeight - fillHeight / fillCount// 挖方的平均高
+		// 	// 多边形面积totalArea = Polygon.area() 
+		// if (digCount === 0 && digHeight === 0) {
+		// 	avgDigHeight = -this.targerHeight
+		// }
+		// if (fillCount === 0 && fillHeight === 0) {
+		// 	avgFillHeight = this.targerHeight
+		// }
+
+		// let fillArea = (totalArea * avgFillHeight) / (avgFillHeight + avgDigHeight),
+		// 	digArea = (totalArea * avgDigHeight) / (avgFillHeight + avgDigHeight)
+		// // console.log(`fillArea : ${fillArea}, digArea : ${digArea}, fillAmount : ${fillAmount}, digAmount : ${digAmount}`);
+		// return {
+		// 	fillArea: fillArea,
+		// 	digArea: digArea,
+		// 	fillAmount: fillArea * avgFillHeight,
+		// 	digAmount: digArea * avgDigHeight
+		// }
+	}
+	_getAllArea() {
+		let area = 0
+		for (let i = 0; i < this.abstractPolygon.length - 1; i++) {
+			let p1 = this.abstractPolygon[i]
+			let p2 = this.abstractPolygon[i + 1]
+			area +=
+				(p2.longitude - p1.longitude) *
+				(2 + Math.sin(p1.latitude) + Math.sin(p2.latitude))
+		}
+		return Math.abs(
+			(area *
+				_Constants_js__WEBPACK_IMPORTED_MODULE_1__['Speed3D_viewer'].viewer.scene
+					.globe.ellipsoid._radii.x *
+				_Constants_js__WEBPACK_IMPORTED_MODULE_1__['Speed3D_viewer'].viewer.scene
+					.globe.ellipsoid._radii.y) /
+				2.0
+		)
+	}
+	/**
+	 * 判定点是否在此多边形内
+	 * @param {Point} otherPoint
+	 * @return {boolean}
+	 */
+	contains(otherPoint) {
+		if (this.isVertix(otherPoint)) return true
+		let flag = false
+		for (let i = 0, l = this.abstractPolygon.length, j = l - 1; i < l; j = i, i++) {
+			if (
+				(this.abstractPolygon[i].latitude < otherPoint.latitude &&
+					this.abstractPolygon[j].latitude >= otherPoint.latitude) ||
+				(this.abstractPolygon[i].latitude >= otherPoint.latitude &&
+					this.abstractPolygon[j].latitude < otherPoint.latitude)
+			) {
+				let longitude =
+					this.abstractPolygon[i].longitude +
+					((otherPoint.latitude - this.abstractPolygon[i].latitude) *
+						(this.abstractPolygon[j].longitude - this.abstractPolygon[i].longitude)) /
+						(this.abstractPolygon[j].latitude - this.abstractPolygon[i].latitude)
+
+				if (longitude === otherPoint.longitude) {
+					return true
+				}
+
+				if (longitude > otherPoint.longitude) {
+					flag = !flag
+				}
+			}
+		}
+		
+		return flag
+	}
+	isVertix(otherPoint) {
+		for (let i = 0; i < this.abstractPolygon.length; i++) {
+			if (otherPoint.equals(this.abstractPolygon[i])) return true
+		}
+		return false
 	}
 	// 清空所有的图形
-	clear(){
-
-	}
+	// clear() {}
+	// zFactor基准面 sampleGap采样精度 采样分析 buffer cache LSCutFillOnTerrain
 }
