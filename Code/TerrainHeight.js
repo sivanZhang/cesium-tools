@@ -135,10 +135,10 @@ class TerrainHeight {
         let granularity = (obj.granularity !== undefined && obj.granularity !== null) ? obj.granularity : 0.00001;
         
         
-        // 把包装盒划分为 网格
+        // 把包围盒划分为 网格
         const rectangleMatrix = TerrainHeight.generateMatix(obj.Polygon.rectangle, granularity); // obj.Polygon.rectangle = array(4 x number)
 
-        // 去除包装盒边界到多边形边界的方格
+        // 去除包围盒边界到多边形边界的方格
         const matrix = TerrainHeight.excludeBound(rectangleMatrix, obj.Polygon);
         if (obj.terrainProvider instanceof dependence.Cesium.EllipsoidTerrainProvider) {
             onSuccess(matrix);
@@ -148,7 +148,7 @@ class TerrainHeight {
                 let tmp = [];
                 for (let j = 0; j < matrix[i].length; j++) {
                     if (matrix[i][j] !== 0) tmp.push(matrix[i][j]);
-                }
+                }// 如果不在边界外     添加到temp
                 if (tmp.length > 0) {
                     let tmpFunction = (resolve, reject) => {
                         dependence.Cesium.when(dependence.Cesium.sampleTerrainMostDetailed(obj.terrainProvider, tmp), (as) => {

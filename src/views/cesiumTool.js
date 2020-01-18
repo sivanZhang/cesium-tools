@@ -757,7 +757,7 @@ export class DigFill extends CesiumTools {
 			// datumPlane
 			// this.returnData = this._getPropertiesNumber(matrix, this.abstractPolygon)
 			this._getPropertiesNumber(matrix)
-			console.log('已完成')
+			console.log('----------------------已完成')
 		} else {
 			console.log('挖方区域面积过小，无法计算土方体积')
 		}
@@ -873,10 +873,21 @@ export class DigFill extends CesiumTools {
 	}
 	isVertix(otherPoint) {
 		for (let i = 0; i < this.abstractPolygon.length; i++) {
-			if (otherPoint.equals(this.abstractPolygon[i])) return true
+			if (this.equals(otherPoint)) return true
 		}
 		return false
 	}
+	equals(target, epsilon = 0.0000000001) {
+        if (epsilon < 1) {
+			// 目前this 点的this
+            return DigFill.inRange(this.longitude - epsilon, this.longitude + epsilon, target.longitude) && DigFill.inRange(this.latitude - epsilon, this.latitude + epsilon, target.latitude);
+        } else {
+            return (this.longitude > 0 ? DigFill.inRange(this.longitude * (1 - epsilon / 10000), this.longitude * (1 + epsilon / 10000), target.x) : DigFill.inRange(this.longitude * (1 + epsilon / 10000), this.longitude * (1 - epsilon / 10000), target.longitude)) && (this.latitude > 0 ?DigFill.inRange(this.latitude * (1 - epsilon / 10000), this.latitude * (1 + epsilon / 10000), target.latitude) :DigFill.inRange(this.latitude * (1 + epsilon / 10000), this.latitude * (1 - epsilon / 10000), target.latitude));
+        }
+	}
+	static inRange(min, max, input) {
+        return input <= max && input >= min;
+    }
 	// 清空所有的图形
 	// clear() {}
 	// zFactor基准面 sampleGap采样精度 采样分析 buffer cache LSCutFillOnTerrain
