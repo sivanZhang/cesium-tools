@@ -16,7 +16,7 @@ class CesiumTools {
 			verticalOrigin: Cesium.VerticalOrigin.CENTER,
 			pixelOffset: new Cesium.Cartesian2(0, 0),
 			eyeOffset: new Cesium.Cartesian3(0, 0, -50),
-			filllatArrayor: Cesium.latArrayor.WHITE
+			fillColor: Cesium.Color.WHITE
 		}
 		this._handler = new this.$Cesium.ScreenSpaceEventHandler(
 			this.$viewer.scene.canvas
@@ -88,20 +88,20 @@ const [
 	_getDistanceString,
 	_getHorizontalDistanceString
 ] = [
-	Symbol('_getVerticalDistanceString'),
-	Symbol('_addDistanceLabel'),
-	Symbol('_getLabelPosition'),
-	Symbol('_getDistanceString'),
-	Symbol('_getHorizontalDistanceString')
-]
+		Symbol('_getVerticalDistanceString'),
+		Symbol('_addDistanceLabel'),
+		Symbol('_getLabelPosition'),
+		Symbol('_getDistanceString'),
+		Symbol('_getHorizontalDistanceString')
+	]
 export class RangingTool extends CesiumTools {
 	constructor(...arg) {
 		super(...arg)
 		this.polylines = this.$viewer.scene.primitives.add(
-			new this.$Cesium.PolylinelatArraylection()
+			new this.$Cesium.PolylineCollection()
 		)
 		this.points = this.$viewer.scene.primitives.add(
-			new this.$Cesium.PointPrimitivelatArraylection()
+			new this.$Cesium.PointPrimitiveCollection()
 		)
 	}
 	// 开始高度测量
@@ -134,7 +134,7 @@ export class RangingTool extends CesiumTools {
 						})
 						circle = this.$viewer.entities.add({
 							ellipse: {
-								material: this.$Cesium.latArrayor.WHITE.withAlpha(0.3),
+								material: this.$Cesium.Color.WHITE.withAlpha(0.3),
 								show: false,
 								semiMinorAxis: 50,
 								semiMajorAxis: 50
@@ -145,19 +145,19 @@ export class RangingTool extends CesiumTools {
 							width: 2,
 							material: new this.$Cesium.Material({
 								fabric: {
-									type: 'latArrayor',
+									type: 'Color',
 									uniforms: {
-										latArrayor: this.$Cesium.latArrayor.fromBytes(210, 225, 100)
+										Color: this.$Cesium.Color.fromBytes(210, 225, 100)
 									}
 								}
 							})
 						})
 						point1 = this.points.add({
 							position: cartesian,
-							latArrayor: this.$Cesium.latArrayor.RED
+							Color: this.$Cesium.Color.RED
 						})
 						point2 = this.points.add({
-							latArrayor: this.$Cesium.latArrayor.RED
+							Color: this.$Cesium.Color.RED
 						})
 						point1GeoPosition = this.$Cesium.Cartographic.fromCartesian(
 							cartesian
@@ -214,7 +214,7 @@ export class RangingTool extends CesiumTools {
 						this.points.remove(point2)
 						point3 = this.points.add({
 							position: cartesian,
-							latArrayor: this.$Cesium.latArrayor.RED
+							Color: this.$Cesium.Color.RED
 						})
 						point3GeoPosition = this.$Cesium.Cartographic.fromCartesian(
 							cartesian
@@ -286,7 +286,7 @@ export class RangingTool extends CesiumTools {
 
 		let circle = this.$viewer.entities.add({
 			ellipse: {
-				material: this.$Cesium.latArrayor.WHITE.withAlpha(0.3),
+				material: this.$Cesium.Color.WHITE.withAlpha(0.3),
 				show: false,
 				semiMinorAxis: 50,
 				semiMajorAxis: 50
@@ -308,14 +308,14 @@ export class RangingTool extends CesiumTools {
 						circle.show = false
 						point1 = this.points.add({
 							position: cartesian,
-							latArrayor: this.$Cesium.latArrayor.RED
+							Color: this.$Cesium.Color.RED
 						})
 					} // add second point and lines
 					else if (this.points.length === 1) {
 						circle.show = true
 						point2 = this.points.add({
 							position: cartesian,
-							latArrayor: this.$Cesium.latArrayor.RED
+							Color: this.$Cesium.Color.RED
 						})
 						// 点的笛卡尔坐标转换为制图坐标。
 						point1GeoPosition = this.$Cesium.Cartographic.fromCartesian(
@@ -355,7 +355,7 @@ export class RangingTool extends CesiumTools {
 							labelZ =
 								point1GeoPosition.height +
 								(point2GeoPosition.height - point1GeoPosition.height) /
-									2.0
+								2.0
 						} else {
 							pl2Positions = [
 								point1.position,
@@ -380,7 +380,7 @@ export class RangingTool extends CesiumTools {
 							labelZ =
 								point2GeoPosition.height +
 								(point1GeoPosition.height - point2GeoPosition.height) /
-									2.0
+								2.0
 						}
 
 						polyline1 = this.polylines.add({
@@ -389,9 +389,9 @@ export class RangingTool extends CesiumTools {
 							width: 2,
 							material: new this.$Cesium.Material({
 								fabric: {
-									type: 'latArrayor',
+									type: 'Color',
 									uniforms: {
-										latArrayor: this.$Cesium.latArrayor.BURLYWOOD
+										Color: this.$Cesium.Color.BURLYWOOD
 									}
 								}
 							})
@@ -404,7 +404,7 @@ export class RangingTool extends CesiumTools {
 								fabric: {
 									type: 'PolylineDash',
 									uniforms: {
-										latArrayor: this.$Cesium.latArrayor.BURLYWOOD
+										Color: this.$Cesium.Color.BURLYWOOD
 									}
 								}
 							})
@@ -417,7 +417,7 @@ export class RangingTool extends CesiumTools {
 								fabric: {
 									type: 'PolylineDash',
 									uniforms: {
-										latArrayor: this.$Cesium.latArrayor.BURLYWOOD
+										Color: this.$Cesium.Color.BURLYWOOD
 									}
 								}
 							})
@@ -566,45 +566,46 @@ export class RangingTool extends CesiumTools {
 	}
 }
 export class DigFill extends CesiumTools {
-	constructor(Cesium, viewer, targerHeight, granularity = 0) {
+	constructor(Cesium, viewer, targerHeight, granularity = 0.00001) {
 		super(Cesium, viewer)
 		this.polylines = this.$viewer.scene.primitives.add(
-			new this.$Cesium.PolylinelatArraylection()
+			new this.$Cesium.PolylineCollection()
 		)
 		// 精度：代表每个网格的边长
-		this.granularity = granularity || 0.00001
+		this.granularity = granularity
 		this.targerHeight = targerHeight
 		this.abstractPolygon = []
+		this._positionList = []
+		this._cartographicList = []
 	}
-	_positionList = []
-	_cartographicList = []
+	
 	start() {
 		this._positionList = []
 		const polygon = this.$viewer.entities.add({
 			show: false,
 			polygon: {
 				// height:0,
-				material: this.$Cesium.latArrayor.GREEN.withAlpha(0.5),
+				material: this.$Cesium.Color.GREEN.withAlpha(0.5),
 				// closeTop: false,
 				// closeBottom: false,
 				outline: true,
 				outlineWidth: 4,
-				outlinelatArrayor: this.$Cesium.latArrayor.AQUAMARINE
+				outlineColor: this.$Cesium.Color.AQUAMARINE
 			}
 		})
 		const wall = this.$viewer.entities.add({
 			show: false,
 			wall: {
-				material: this.$Cesium.latArrayor.WHEAT.withAlpha(0.5),
+				material: this.$Cesium.Color.WHEAT.withAlpha(0.5),
 				outline: true,
 				outlineWidth: 4,
-				outlinelatArrayor: this.$Cesium.latArrayor.AQUAMARINE
+				outlineColor: this.$Cesium.Color.AQUAMARINE
 			}
 		})
 		const tempLine = this.$viewer.entities.add({
 			show: false,
 			polyline: {
-				material: this.$Cesium.latArrayor.AQUAMARINE,
+				material: this.$Cesium.Color.AQUAMARINE,
 				width: 2,
 				clampToGround: true
 			}
@@ -682,25 +683,25 @@ export class DigFill extends CesiumTools {
 	_computeRectangle() {
 		this.abstractPolygon = this._cartographicList.map(item => {
 			return {
-				longitude:this.$Cesium.Math.toDegrees(item.longitude),
-				latitude:this.$Cesium.Math.toDegrees(item.latitude),
-				height:item.height
+				longitude: this.$Cesium.Math.toDegrees(item.longitude),
+				latitude: this.$Cesium.Math.toDegrees(item.latitude),
+				height: item.height
 			}
 		})
 		// 加包装盒
 		let lon1 = -Infinity;
-        let lat1 = -Infinity;
-        let lon2 = Infinity;
-        let lat2 = Infinity;
-        for (let i = 0; i < this.position.length; i++) {
-            lon1 = Math.max(this.position[i].longitude, lon1);
-            lat1 = Math.max(this.position[i].latitude, lat1);
-            lon2 = Math.min(this.position[i].longitude, lon2);
-            lat2 = Math.min(this.position[i].latitude, lat2);
-        }
-        // [lon2, lat2, lon1, lat1];
-		
-		
+		let lat1 = -Infinity;
+		let lon2 = Infinity;
+		let lat2 = Infinity;
+		for (let i = 0; i < this.position.length; i++) {
+			lon1 = Math.max(this.position[i].longitude, lon1);
+			lat1 = Math.max(this.position[i].latitude, lat1);
+			lon2 = Math.min(this.position[i].longitude, lon2);
+			lat2 = Math.min(this.position[i].latitude, lat2);
+		}
+		// [lon2, lat2, lon1, lat1];
+
+
 		//  分成网格
 		const lonArray = [],
 			latArray = []
@@ -726,18 +727,18 @@ export class DigFill extends CesiumTools {
 				lat2 += this.granularity
 			}
 		}
-		
+
 		//  有包装盒网格二维数组
 		let matrix = []
 		lonArray.forEach(lon => {
-			let temp=[]
+			let temp = []
 			latArray.forEach(lat => {
 				temp.push(lon, lat, 0)
 				//tmp.push(new Point(lonArray[i], latArray[j], 0));
 			})
 			matrix.push(temp)
 		})
-		console.log(matrix,'matrixmatrixmatrixmatrixmatrixmatrixmatrixmatrixmatrix');
+		console.log(matrix, 'matrixmatrixmatrixmatrixmatrixmatrixmatrixmatrixmatrix');
 		matrix = this._excludeBound(matrix)
 		this._onSuccess(matrix)
 	}
@@ -766,20 +767,20 @@ export class DigFill extends CesiumTools {
 	_getPropertiesNumber(matrix) {
 		// 如果基准高没有 获取基准高
 		let sum = 0,
-				count = 0
-			for (let i = 0; i < matrix.length; i++) {
-				for (let j = 0; j < matrix[i].length; j++) {
-					if (matrix[i][j] !== 0) {
-						sum += matrix[i][j].height
-						debugger
-						count++
-					}
+			count = 0
+		for (let i = 0; i < matrix.length; i++) {
+			for (let j = 0; j < matrix[i].length; j++) {
+				if (matrix[i][j] !== 0) {
+					sum += matrix[i][j].height
+					debugger
+					count++
 				}
 			}
-			this.targerHeight = sum / count
-			console.log(this.targerHeight,'0.0.0.0.0.0.0.0.0.0');
+		}
+		this.targerHeight = sum / count
+		console.log(this.targerHeight, '0.0.0.0.0.0.0.0.0.0');
 		// if (!this.targerHeight) {
-			
+
 		// }
 		// let digHeight = 0,
 		// 	digCount = 0,
@@ -835,7 +836,7 @@ export class DigFill extends CesiumTools {
 					.globe.ellipsoid._radii.x *
 				_Constants_js__WEBPACK_IMPORTED_MODULE_1__['Speed3D_viewer'].viewer.scene
 					.globe.ellipsoid._radii.y) /
-				2.0
+			2.0
 		)
 	}
 	/**
@@ -857,7 +858,7 @@ export class DigFill extends CesiumTools {
 					this.abstractPolygon[i].longitude +
 					((otherPoint.latitude - this.abstractPolygon[i].latitude) *
 						(this.abstractPolygon[j].longitude - this.abstractPolygon[i].longitude)) /
-						(this.abstractPolygon[j].latitude - this.abstractPolygon[i].latitude)
+					(this.abstractPolygon[j].latitude - this.abstractPolygon[i].latitude)
 
 				if (longitude === otherPoint.longitude) {
 					return true
@@ -868,7 +869,7 @@ export class DigFill extends CesiumTools {
 				}
 			}
 		}
-		
+
 		return flag
 	}
 	isVertix(otherPoint) {
@@ -878,16 +879,16 @@ export class DigFill extends CesiumTools {
 		return false
 	}
 	equals(target, epsilon = 0.0000000001) {
-        if (epsilon < 1) {
+		if (epsilon < 1) {
 			// 目前this 点的this
-            return DigFill.inRange(this.longitude - epsilon, this.longitude + epsilon, target.longitude) && DigFill.inRange(this.latitude - epsilon, this.latitude + epsilon, target.latitude);
-        } else {
-            return (this.longitude > 0 ? DigFill.inRange(this.longitude * (1 - epsilon / 10000), this.longitude * (1 + epsilon / 10000), target.x) : DigFill.inRange(this.longitude * (1 + epsilon / 10000), this.longitude * (1 - epsilon / 10000), target.longitude)) && (this.latitude > 0 ?DigFill.inRange(this.latitude * (1 - epsilon / 10000), this.latitude * (1 + epsilon / 10000), target.latitude) :DigFill.inRange(this.latitude * (1 + epsilon / 10000), this.latitude * (1 - epsilon / 10000), target.latitude));
-        }
+			return DigFill.inRange(this.longitude - epsilon, this.longitude + epsilon, target.longitude) && DigFill.inRange(this.latitude - epsilon, this.latitude + epsilon, target.latitude);
+		} else {
+			return (this.longitude > 0 ? DigFill.inRange(this.longitude * (1 - epsilon / 10000), this.longitude * (1 + epsilon / 10000), target.x) : DigFill.inRange(this.longitude * (1 + epsilon / 10000), this.longitude * (1 - epsilon / 10000), target.longitude)) && (this.latitude > 0 ? DigFill.inRange(this.latitude * (1 - epsilon / 10000), this.latitude * (1 + epsilon / 10000), target.latitude) : DigFill.inRange(this.latitude * (1 + epsilon / 10000), this.latitude * (1 - epsilon / 10000), target.latitude));
+		}
 	}
 	static inRange(min, max, input) {
-        return input <= max && input >= min;
-    }
+		return input <= max && input >= min;
+	}
 	// 清空所有的图形
 	// clear() {}
 	// zFactor基准面 sampleGap采样精度 采样分析 buffer cache LSCutFillOnTerrain
