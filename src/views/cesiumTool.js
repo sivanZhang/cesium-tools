@@ -1,9 +1,14 @@
-
-import Basic from './basic'
-import PromiseChain from './promise'
+import Basic from "./basic"
+import PromiseChain from "./promise"
 
 export class DigFill extends Basic {
-	constructor(Cesium, viewer, targerHeight, terrainProvider,granularity = 0.000005) {
+	constructor(
+		Cesium,
+		viewer,
+		targerHeight,
+		terrainProvider,
+		granularity = 0.000005
+	) {
 		super(Cesium, viewer)
 		this.polylines = this.$viewer.scene.primitives.add(
 			new this.$Cesium.PolylineCollection()
@@ -13,33 +18,47 @@ export class DigFill extends Basic {
 		this.targerHeight = targerHeight
 		this.terrainProvider = terrainProvider
 	}
-	onFail(){
-		console.log('onFail')
+	onFail() {
+		console.log("onFail")
 	}
 	_cartesianList = []
+	// 含高程
 	_cartographicList = []
-	_abstractPolygon = []
-	test(){
-		this.$bindEvent('LEFT_CLICK', ({ position }) => {
+	test() {
+		this.$bindEvent("LEFT_CLICK", ({ position }) => {
 			let clickCartesian = this.$getPickPosition(position)
 			const ellipsoid = this.$Cesium.Ellipsoid.WGS84
-			const terrainProvider = this.$Cesium.createWorldTerrain();
-			let cartographic = this.$Cesium.Cartographic.fromCartesian(clickCartesian, ellipsoid)
+			const terrainProvider = this.$Cesium.createWorldTerrain()
+			let cartographic = this.$Cesium.Cartographic.fromCartesian(
+				clickCartesian,
+				ellipsoid
+			)
 			let temp = []
 			let arr = [cartographic, cartographic, cartographic]
 			arr.forEach(t => {
-				temp.push(this.$Cesium.Cartographic.fromRadians(t.longitude - 0.1, t.latitude - 0.1,0))
+				temp.push(
+					this.$Cesium.Cartographic.fromRadians(
+						t.longitude - 0.1,
+						t.latitude - 0.1,
+						0
+					)
+				)
 				//tmp.push(new Point(lonArray[i], latArray[j], 0));
 			})
-			console.log('------hhhhhhhhhhh--------', arr,temp )
-			var promise = this.$Cesium.sampleTerrainMostDetailed(terrainProvider, temp)
-			this.$Cesium.when(promise, (as) => {
-				console.log('--------------',as)
-			},(err)=>{
-					console.error(err, 'errerrerrerrerr')
-			}
-				
-			);
+			console.log("------hhhhhhhhhhh--------", arr, temp)
+			var promise = this.$Cesium.sampleTerrainMostDetailed(
+				terrainProvider,
+				temp
+			)
+			this.$Cesium.when(
+				promise,
+				as => {
+					console.log("--------------", as)
+				},
+				err => {
+					console.error(err, "errerrerrerrerr")
+				}
+			)
 		})
 	}
 	start() {
@@ -49,7 +68,7 @@ export class DigFill extends Basic {
 			show: false,
 			polygon: {
 				// height:0,
-				material: this.$Cesium.Color.AQUAMARINE.withAlpha(0.6),
+				material: this.$Cesium.Color.AQUAMARINE.withAlpha(0.6)
 				// closeTop: false,
 				// closeBottom: false,
 			}
@@ -72,16 +91,19 @@ export class DigFill extends Basic {
 			}
 		})
 		// 点击选点
-		this.$bindEvent('LEFT_CLICK', ({ position }) => {
+		this.$bindEvent("LEFT_CLICK", ({ position }) => {
 			let clickCartesian = this.$getPickPosition(position)
 			this._cartesianList.push(clickCartesian)
 			let len = this._cartesianList.length
 			// 橡皮筋
-			this.$bindEvent('MOUSE_MOVE', ({ endPosition }) => {
+			this.$bindEvent("MOUSE_MOVE", ({ endPosition }) => {
 				let moveCartesian = this.$getPickPosition(endPosition)
 				tempLine.polyline.show = true
 				if (len === 1) {
-					tempLine.polyline.positions = [clickCartesian, moveCartesian]
+					tempLine.polyline.positions = [
+						clickCartesian,
+						moveCartesian
+					]
 				} else if (len >= 2) {
 					tempLine.polyline.show = false
 					polygon.show = true
@@ -93,7 +115,7 @@ export class DigFill extends Basic {
 				}
 			})
 		})
-		this.$bindEvent('RIGHT_CLICK', () => {
+		this.$bindEvent("RIGHT_CLICK", () => {
 			if (this._cartesianList.length >= 3) {
 				this._cartesianList.push(this._cartesianList[0])
 				const ellipsoid = this.$Cesium.Ellipsoid.WGS84
@@ -101,7 +123,7 @@ export class DigFill extends Basic {
 					return this.$Cesium.Cartographic.fromCartesian(t, ellipsoid)
 				})
 				this.$removeEvent()
-				
+
 				tempLine.show = false
 				polygon.show = false
 				wall.show = true
@@ -135,7 +157,7 @@ export class DigFill extends Basic {
 		this._computeRectangle()
 	}
 	_computeRectangle() {
-		// this._abstractPolygon = this._cartographicList.map(item => {
+		// this._cartographicList = this._cartographicList.map(item => {
 		// 	return {
 		// 		longitude: this.$Cesium.Math.toDegrees(item.longitude),
 		// 		latitude: this.$Cesium.Math.toDegrees(item.latitude),
@@ -143,15 +165,15 @@ export class DigFill extends Basic {
 		// 	}
 		// })
 		// 加包围盒
-		let lon1 = -Infinity;
-		let lat1 = -Infinity;
-		let lon2 = Infinity;
-		let lat2 = Infinity;
+		let lon1 = -Infinity
+		let lat1 = -Infinity
+		let lon2 = Infinity
+		let lat2 = Infinity
 		for (let i = 0; i < this._cartographicList.length; i++) {
-			lon1 = Math.max(this._cartographicList[i].longitude, lon1);
-			lat1 = Math.max(this._cartographicList[i].latitude, lat1);
-			lon2 = Math.min(this._cartographicList[i].longitude, lon2);
-			lat2 = Math.min(this._cartographicList[i].latitude, lat2);
+			lon1 = Math.max(this._cartographicList[i].longitude, lon1)
+			lat1 = Math.max(this._cartographicList[i].latitude, lat1)
+			lon2 = Math.min(this._cartographicList[i].longitude, lon2)
+			lat2 = Math.min(this._cartographicList[i].latitude, lat2)
 		}
 		// [lon2, lat2, lon1, lat1];
 
@@ -192,37 +214,50 @@ export class DigFill extends Basic {
 			matrix.push(temp)
 		})
 		matrix = this._excludeBound(matrix)
-		let promises = [];
-		const terrainProvider = this.$Cesium.createWorldTerrain();
+		let promises = []
+		const terrainProvider = this.$Cesium.createWorldTerrain()
 		for (let i = 0; i < matrix.length; i++) {
-			let temp = []; // matrix  变成一位数组
+			let temp = [] // matrix  变成一位数组
 			for (let j = 0; j < matrix[i].length; j++) {
-				if(matrix[i][j] !== 0){
+				if (matrix[i][j] !== 0) {
 					temp.push(matrix[i][j])
 				}
-			}// 如果不在边界外     添加到temp
+			} // 如果不在边界外     添加到temp
 
-			let resolveArr =[]
+			let resolveArr = []
 			if (temp.length > 0) {
-				let tmpFunction = (resolve, reject) => {// → Promise.<Array.< Cartographic >>
-					var promise = this.$Cesium.sampleTerrainMostDetailed(terrainProvider, temp)
-					this.$Cesium.when(promise, (res) => {
-						resolve(res);
-					}, () => {
-						reject();
-					});
-				};
-				promises.push(tmpFunction);
+				let tmpFunction = (resolve, reject) => {
+					// → Promise.<Array.< Cartographic >>
+					var promise = this.$Cesium.sampleTerrainMostDetailed(
+						terrainProvider,
+						temp
+					)
+					this.$Cesium.when(
+						promise,
+						res => {
+							resolve(res)
+						},
+						() => {
+							reject()
+						}
+					)
+				}
+				promises.push(tmpFunction)
 			}
 		}
-		let promiseChain = new PromiseChain(promises, this._onSuccess, this.onFail);
-		promiseChain.all();
+		let promiseChain = new PromiseChain(
+			promises,
+			this._onSuccess.bind(this),
+			this.onFail
+		)
+		promiseChain.all()
 	}
 	// 去除包围盒边界到多边形边界的方格   边界外的对象 = 0失败
 	_excludeBound(matrix) {
 		matrix.forEach(item => {
 			item.forEach(point => {
 				if (!this.contains(point)) {
+					console.log('point = 0')
 					point = 0
 				}
 			})
@@ -230,117 +265,119 @@ export class DigFill extends Basic {
 		return matrix
 	}
 	_onSuccess(matrix) {
-		console.log('进入onsuc')
 		if (matrix) {
-			// datumPlane
-			// this.returnData = this._getPropertiesNumber(matrix, this._abstractPolygon)
-			this._getPropertiesNumber(matrix, this._cartographicList)
-			console.log('----------------------已完成')
+			this._getPropertiesNumber(matrix)
 		} else {
-			console.log('挖方区域面积过小，无法计算土方体积')
+			console.log("挖方区域面积过小，无法计算土方体积")
 		}
 		this.targerHeight = null
 	}
-	_getPropertiesNumber(matrix, Polygon) {
-		// 如果基准高没有 获取基准高
-		let sum = 0,
-			count = 0
+	_getPropertiesNumber(matrix) {
+		if (!this.targerHeight) {
+			// 如果基准高没有 获取基准高
+			let sum = 0,
+				count = 0
+			for (let i = 0; i < matrix.length; i++) {
+				for (let j = 0; j < matrix[i].length; j++) {
+					if (matrix[i][j] !== 0) {
+						sum += matrix[i][j].height
+						count++
+					}
+				}
+			}
+			this.targerHeight = sum / count
+		}
+		let digHeight = 0,
+			digCount = 0,
+			fillHeight = 0,
+			fillCount = 0
 		for (let i = 0; i < matrix.length; i++) {
 			for (let j = 0; j < matrix[i].length; j++) {
 				if (matrix[i][j] !== 0) {
-					sum += matrix[i][j].height
-					debugger
-					count++
+					if (matrix[i][j].height > this.targerHeight) {
+						digHeight += matrix[i][j].height
+						digCount++
+					} else {
+						fillCount++
+						fillHeight += matrix[i][j].height
+					}
 				}
 			}
 		}
-		this.targerHeight = sum / count
-		console.log(this.targerHeight, 'hhhhhhhhhhhhhhhhhhhh');
-		// if (!this.targerHeight) {
-		// }
-		// let digHeight = 0,
-		// 	digCount = 0,
-		// 	fillHeight = 0,
-		// 	fillCount = 0
-		// for (let i = 0; i < matrix.length; i++) {
-		// 	for (let j = 0; j < matrix[i].length; j++) {
-		// 		if (matrix[i][j] !== 0) {
-		// 			if (matrix[i][j].height > this.targerHeight) {
-		// 				digHeight += matrix[i][j].height
-		// 				matrix[i][j].Speed3DEWA = 1 // 自定义 应该是标记
-		// 				digCount++
-		// 			} else {
-		// 				fillCount++
-		// 				matrix[i][j].Speed3DEWA = 2
-		// 				fillHeight += matrix[i][j].height
-		// 			}
-		// 		}
-		// 	}
-		// }
-		// let avgDigHeight = digHeight / digCount - this.targerHeight, //  填方的平均高
-		// 	avgFillHeight = this.targerHeight - fillHeight / fillCount// 挖方的平均高
-		// 	// 多边形面积totalArea = Polygon.area() 
-		// if (digCount === 0 && digHeight === 0) {
-		// 	avgDigHeight = -this.targerHeight
-		// }
-		// if (fillCount === 0 && fillHeight === 0) {
-		// 	avgFillHeight = this.targerHeight
-		// }
+		let avgDigHeight = digHeight / digCount - this.targerHeight, //  填方的平均高
+			avgFillHeight = this.targerHeight - fillHeight / fillCount // 挖方的平均高
+		// 多边形面积totalArea = this._getAllArea()
+		let totalArea = this._getAllArea()
+		if (digCount === 0 && digHeight === 0) {
+			avgDigHeight = -this.targerHeight
+		}
+		if (fillCount === 0 && fillHeight === 0) {
+			avgFillHeight = this.targerHeight
+		}
+		let fillArea =
+				(totalArea * avgFillHeight) / (avgFillHeight + avgDigHeight),
+			digArea =
+				(totalArea * avgDigHeight) / (avgFillHeight + avgDigHeight)
 
-		// let fillArea = (totalArea * avgFillHeight) / (avgFillHeight + avgDigHeight),
-		// 	digArea = (totalArea * avgDigHeight) / (avgFillHeight + avgDigHeight)
-		// // console.log(`fillArea : ${fillArea}, digArea : ${digArea}, fillAmount : ${fillAmount}, digAmount : ${digAmount}`);
-		// return {
-		// 	fillArea: fillArea,
-		// 	digArea: digArea,
-		// 	fillAmount: fillArea * avgFillHeight,
-		// 	digAmount: digArea * avgDigHeight
-		// }
+		let returns = {
+			fillArea: fillArea,
+			digArea: digArea,
+			fillAmount: fillArea * avgFillHeight,
+			digAmount: digArea * avgDigHeight
+		}
+		console.log("returnData", returns)
 	}
 	_getAllArea() {
 		let area = 0
-		for (let i = 0; i < this._abstractPolygon.length - 1; i++) {
-			let p1 = this._abstractPolygon[i]
-			let p2 = this._abstractPolygon[i + 1]
+		for (let i = 0; i < this._cartographicList.length - 1; i++) {
+			let p1 = this._cartographicList[i]
+			let p2 = this._cartographicList[i + 1]
 			area +=
 				(p2.longitude - p1.longitude) *
 				(2 + Math.sin(p1.latitude) + Math.sin(p2.latitude))
 		}
+		//获取椭球的半径。_radii
 		return Math.abs(
 			(area *
-				_Constants_js__WEBPACK_IMPORTED_MODULE_1__['Speed3D_viewer'].viewer.scene
-					.globe.ellipsoid._radii.x *
-				_Constants_js__WEBPACK_IMPORTED_MODULE_1__['Speed3D_viewer'].viewer.scene
-					.globe.ellipsoid._radii.y) /
-			2.0
+				this.$viewer.scene.globe.ellipsoid.radii.x *
+				this.$viewer.scene.globe.ellipsoid.radii.y) /
+				2.0
 		)
 	}
 	/**
 	 * 判定点是否在此多边形内
-	 * @param {Point} otherPoint
+	 * @param {Point} currentPoint
 	 * @return {boolean}
 	 */
-	contains(otherPoint) {
-		if (this.isVertix(otherPoint)) return true
+	contains(currentPoint) {
+		if (this.isVertix(currentPoint)) return true
 		let flag = false
-		for (let i = 0, l = this._abstractPolygon.length, j = l - 1; i < l; j = i, i++) {
+		for (
+			let i = 0, l = this._cartographicList.length, j = l - 1;
+			i < l;
+			j = i, i++
+		) {
 			if (
-				(this._abstractPolygon[i].latitude < otherPoint.latitude &&
-					this._abstractPolygon[j].latitude >= otherPoint.latitude) ||
-				(this._abstractPolygon[i].latitude >= otherPoint.latitude &&
-					this._abstractPolygon[j].latitude < otherPoint.latitude)
+				(this._cartographicList[i].latitude < currentPoint.latitude &&
+					this._cartographicList[j].latitude >=
+						currentPoint.latitude) ||
+				(this._cartographicList[i].latitude >= currentPoint.latitude &&
+					this._cartographicList[j].latitude < currentPoint.latitude)
 			) {
 				let longitude =
-					this._abstractPolygon[i].longitude +
-					((otherPoint.latitude - this._abstractPolygon[i].latitude) *
-						(this._abstractPolygon[j].longitude - this._abstractPolygon[i].longitude)) /
-					(this._abstractPolygon[j].latitude - this._abstractPolygon[i].latitude)
+					this._cartographicList[i].longitude +
+					((currentPoint.latitude -
+						this._cartographicList[i].latitude) *
+						(this._cartographicList[j].longitude -
+							this._cartographicList[i].longitude)) /
+						(this._cartographicList[j].latitude -
+							this._cartographicList[i].latitude)
 
-				if (longitude === otherPoint.longitude) {
+				if (longitude === currentPoint.longitude) {
 					return true
 				}
 
-				if (longitude > otherPoint.longitude) {
+				if (longitude > currentPoint.longitude) {
 					flag = !flag
 				}
 			}
@@ -348,22 +385,58 @@ export class DigFill extends Basic {
 
 		return flag
 	}
-	isVertix(otherPoint) {
-		for (let i = 0; i < this._abstractPolygon.length; i++) {
-			if (this.equals(otherPoint)) return true
+	isVertix(currentPoint) {
+		for (let i = 0; i < this._cartographicList.length; i++) {
+			if (this.equals(currentPoint, this._cartographicList[i])){
+				return true
+			}	
 		}
 		return false
 	}
-	equals(target, epsilon = 0.0000000001) {
+	equals(currentPoint, target, epsilon = 0.00000001) {
 		if (epsilon < 1) {
-			// 目前this 点的this
-			return DigFill.inRange(this.longitude - epsilon, this.longitude + epsilon, target.longitude) && DigFill.inRange(this.latitude - epsilon, this.latitude + epsilon, target.latitude);
+			return (
+				DigFill.inRange(
+					currentPoint.longitude - epsilon,
+					currentPoint.longitude + epsilon,
+					target.longitude
+				) &&
+				DigFill.inRange(
+					currentPoint.latitude - epsilon,
+					currentPoint.latitude + epsilon,
+					target.latitude
+				)
+			)
 		} else {
-			return (this.longitude > 0 ? DigFill.inRange(this.longitude * (1 - epsilon / 10000), this.longitude * (1 + epsilon / 10000), target.x) : DigFill.inRange(this.longitude * (1 + epsilon / 10000), this.longitude * (1 - epsilon / 10000), target.longitude)) && (this.latitude > 0 ? DigFill.inRange(this.latitude * (1 - epsilon / 10000), this.latitude * (1 + epsilon / 10000), target.latitude) : DigFill.inRange(this.latitude * (1 + epsilon / 10000), this.latitude * (1 - epsilon / 10000), target.latitude));
+			return (
+				(currentPoint.longitude > 0
+					? DigFill.inRange(
+						currentPoint.longitude * (1 - epsilon / 10000),
+						currentPoint.longitude * (1 + epsilon / 10000),
+							target.x
+					  )
+					: DigFill.inRange(
+						currentPoint.longitude * (1 + epsilon / 10000),
+						currentPoint.longitude * (1 - epsilon / 10000),
+							target.longitude
+					  )) &&
+				(currentPoint.latitude > 0
+					? DigFill.inRange(
+						currentPoint.latitude * (1 - epsilon / 10000),
+						currentPoint.latitude * (1 + epsilon / 10000),
+							target.latitude
+					  )
+					: DigFill.inRange(
+						currentPoint.latitude * (1 + epsilon / 10000),
+						currentPoint.latitude * (1 - epsilon / 10000),
+							target.latitude
+					  ))
+			)
 		}
 	}
+	// 一样
 	static inRange(min, max, input) {
-		return input <= max && input >= min;
+		return input <= max && input >= min
 	}
 	// 清空所有的图形
 	// clear() {}
@@ -378,12 +451,12 @@ const [
 	_getDistanceString,
 	_getHorizontalDistanceString
 ] = [
-		Symbol('_getVerticalDistanceString'),
-		Symbol('_addDistanceLabel'),
-		Symbol('_getLabelPosition'),
-		Symbol('_getDistanceString'),
-		Symbol('_getHorizontalDistanceString')
-	]
+	Symbol("_getVerticalDistanceString"),
+	Symbol("_addDistanceLabel"),
+	Symbol("_getLabelPosition"),
+	Symbol("_getDistanceString"),
+	Symbol("_getHorizontalDistanceString")
+]
 export class RangingTool extends Basic {
 	constructor(...arg) {
 		super(...arg)
@@ -405,14 +478,17 @@ export class RangingTool extends Basic {
 			point2,
 			point1GeoPosition,
 			point3GeoPosition
-		this.$bindEvent('LEFT_CLICK', ({ position }) => {
+		this.$bindEvent("LEFT_CLICK", ({ position }) => {
 			if (this.$viewer.scene.mode !== this.$Cesium.SceneMode.MORPHING) {
 				let plPositions = []
 				// 鼠标触发的位置的笛卡尔坐标
 				const cartesian = this.$getPickPosition(position)
 
 				if (this.$Cesium.defined(cartesian)) {
-					if (this.points.length === 2 && this.points.contains(point3)) {
+					if (
+						this.points.length === 2 &&
+						this.points.contains(point3)
+					) {
 						this.points.removeAll()
 						this.polylines.removeAll()
 						this.$viewer.entities.remove(verticalLabel)
@@ -424,7 +500,9 @@ export class RangingTool extends Basic {
 						})
 						circle = this.$viewer.entities.add({
 							ellipse: {
-								material: this.$Cesium.Color.WHITE.withAlpha(0.3),
+								material: this.$Cesium.Color.WHITE.withAlpha(
+									0.3
+								),
 								show: false,
 								semiMinorAxis: 50,
 								semiMajorAxis: 50
@@ -435,9 +513,13 @@ export class RangingTool extends Basic {
 							width: 2,
 							material: new this.$Cesium.Material({
 								fabric: {
-									type: 'Color',
+									type: "Color",
 									uniforms: {
-										color: this.$Cesium.Color.fromBytes(210, 225, 100)
+										color: this.$Cesium.Color.fromBytes(
+											210,
+											225,
+											100
+										)
 									}
 								}
 							})
@@ -455,14 +537,19 @@ export class RangingTool extends Basic {
 						polyline.show = true
 						circle.ellipse.show = true
 
-						this.$bindEvent('MOUSE_MOVE', ({ endPosition }) => {
-							const hoverCartesian = this.$getPickPosition(endPosition)
+						this.$bindEvent("MOUSE_MOVE", ({ endPosition }) => {
+							const hoverCartesian = this.$getPickPosition(
+								endPosition
+							)
 							const point2GeoPosition = this.$Cesium.Cartographic.fromCartesian(
 								hoverCartesian
 							)
 							point2.position = hoverCartesian
 							let labelHeight
-							if (point2GeoPosition.height >= point1GeoPosition.height) {
+							if (
+								point2GeoPosition.height >=
+								point1GeoPosition.height
+							) {
 								plPositions = [
 									point1.position,
 									new this.$Cesium.Cartesian3.fromRadians(
@@ -473,7 +560,8 @@ export class RangingTool extends Basic {
 								]
 								labelHeight =
 									point1GeoPosition.height +
-									(point2GeoPosition.height - point1GeoPosition.height)
+									(point2GeoPosition.height -
+										point1GeoPosition.height)
 							} else {
 								plPositions = [
 									point2.position,
@@ -485,14 +573,15 @@ export class RangingTool extends Basic {
 								]
 								labelHeight =
 									point2GeoPosition.height +
-									(point1GeoPosition.height - point2GeoPosition.height)
+									(point1GeoPosition.height -
+										point2GeoPosition.height)
 							}
 							polyline.positions = plPositions
 							this[_addDistanceLabel](
 								point1,
 								point2,
 								labelHeight,
-								'measureheight',
+								"measureheight",
 								point2GeoPosition,
 								point1GeoPosition,
 								verticalLabel
@@ -500,7 +589,7 @@ export class RangingTool extends Basic {
 						})
 					} // add second point and lines
 					else if (!this.points.contains(point3)) {
-						this.$removeEvent('MOUSE_MOVE')
+						this.$removeEvent("MOUSE_MOVE")
 						this.points.remove(point2)
 						point3 = this.points.add({
 							position: cartesian,
@@ -510,7 +599,9 @@ export class RangingTool extends Basic {
 							cartesian
 						)
 						let labelHeight
-						if (point3GeoPosition.height >= point1GeoPosition.height) {
+						if (
+							point3GeoPosition.height >= point1GeoPosition.height
+						) {
 							plPositions = [
 								point1.position,
 								new this.$Cesium.Cartesian3.fromRadians(
@@ -526,7 +617,8 @@ export class RangingTool extends Basic {
 
 							labelHeight =
 								point1GeoPosition.height +
-								(point3GeoPosition.height - point1GeoPosition.height)
+								(point3GeoPosition.height -
+									point1GeoPosition.height)
 						} else {
 							plPositions = [
 								point3.position,
@@ -543,14 +635,15 @@ export class RangingTool extends Basic {
 
 							labelHeight =
 								point3GeoPosition.height +
-								(point1GeoPosition.height - point3GeoPosition.height)
+								(point1GeoPosition.height -
+									point3GeoPosition.height)
 						}
 						polyline.positions = plPositions
 						this[_addDistanceLabel](
 							point1,
 							point3,
 							labelHeight,
-							'measureheight',
+							"measureheight",
 							point3GeoPosition,
 							point1GeoPosition,
 							verticalLabel
@@ -582,7 +675,7 @@ export class RangingTool extends Basic {
 				semiMajorAxis: 50
 			}
 		})
-		this.$bindEvent('LEFT_CLICK', ({ position }) => {
+		this.$bindEvent("LEFT_CLICK", ({ position }) => {
 			if (this.$viewer.scene.mode !== this.$Cesium.SceneMode.MORPHING) {
 				let cartesian = this.$getPickPosition(position)
 				if (this.$Cesium.defined(cartesian)) {
@@ -620,7 +713,9 @@ export class RangingTool extends Basic {
 						let pl2Positions = []
 						let pl3Positions = []
 						let labelZ
-						if (point2GeoPosition.height >= point1GeoPosition.height) {
+						if (
+							point2GeoPosition.height >= point1GeoPosition.height
+						) {
 							pl2Positions = [
 								point2.position,
 								new this.$Cesium.Cartesian3.fromRadians(
@@ -644,8 +739,9 @@ export class RangingTool extends Basic {
 							circle.ellipse.show = true
 							labelZ =
 								point1GeoPosition.height +
-								(point2GeoPosition.height - point1GeoPosition.height) /
-								2.0
+								(point2GeoPosition.height -
+									point1GeoPosition.height) /
+									2.0
 						} else {
 							pl2Positions = [
 								point1.position,
@@ -669,8 +765,9 @@ export class RangingTool extends Basic {
 							circle.ellipse.show = true
 							labelZ =
 								point2GeoPosition.height +
-								(point1GeoPosition.height - point2GeoPosition.height) /
-								2.0
+								(point1GeoPosition.height -
+									point2GeoPosition.height) /
+									2.0
 						}
 
 						polyline1 = this.polylines.add({
@@ -679,7 +776,7 @@ export class RangingTool extends Basic {
 							width: 2,
 							material: new this.$Cesium.Material({
 								fabric: {
-									type: 'Color',
+									type: "Color",
 									uniforms: {
 										color: this.$Cesium.Color.BURLYWOOD
 									}
@@ -692,7 +789,7 @@ export class RangingTool extends Basic {
 							width: 1,
 							material: new this.$Cesium.Material({
 								fabric: {
-									type: 'PolylineDash',
+									type: "PolylineDash",
 									uniforms: {
 										color: this.$Cesium.Color.BURLYWOOD
 									}
@@ -705,7 +802,7 @@ export class RangingTool extends Basic {
 							width: 1,
 							material: new this.$Cesium.Material({
 								fabric: {
-									type: 'PolylineDash',
+									type: "PolylineDash",
 									uniforms: {
 										color: this.$Cesium.Color.BURLYWOOD
 									}
@@ -726,7 +823,7 @@ export class RangingTool extends Basic {
 							point1,
 							point2,
 							labelZ,
-							'triangulation',
+							"triangulation",
 							point1GeoPosition,
 							point2GeoPosition,
 							verticalLabel,
@@ -765,7 +862,7 @@ export class RangingTool extends Basic {
 			point2GeoPosition
 		)
 
-		if (type === 'measureheight') {
+		if (type === "measureheight") {
 			if (point2GeoPosition.height >= point1GeoPosition.height) {
 				verticalLabel.position = this[_getLabelPosition](p2, p2, height)
 			} else {
@@ -774,14 +871,17 @@ export class RangingTool extends Basic {
 			return
 		}
 
-		if (type === 'triangulation') {
+		if (type === "triangulation") {
 			distanceLabel.label.text = this[_getDistanceString](
 				p1,
 				p2,
 				point1GeoPosition,
 				point2GeoPosition
 			)
-			horizontalLabel.label.text = this[_getHorizontalDistanceString](p1, p2)
+			horizontalLabel.label.text = this[_getHorizontalDistanceString](
+				p1,
+				p2
+			)
 			distanceLabel.position = this[_getLabelPosition](p1, p2, height)
 			if (point2GeoPosition.height >= point1GeoPosition.height) {
 				verticalLabel.position = this[_getLabelPosition](p1, p1, height)
@@ -808,9 +908,9 @@ export class RangingTool extends Basic {
 		// 获取起点和终点之间的表面距离
 		const meters = geodesic.surfaceDistance.toFixed(2)
 		if (meters >= 1000) {
-			return (meters / 1000).toFixed(2) + ' км'
+			return (meters / 1000).toFixed(2) + " км"
 		}
-		return meters + ' м'
+		return meters + " м"
 	}
 
 	[_getDistanceString](point1, point2, point1GeoPosition, point2GeoPosition) {
@@ -825,16 +925,17 @@ export class RangingTool extends Basic {
 			0.5
 		)
 		if (meters >= 1000) {
-			return (meters / 1000).toFixed(2) + ' км'
+			return (meters / 1000).toFixed(2) + " км"
 		}
-		return meters.toFixed(2) + ' м'
+		return meters.toFixed(2) + " м"
 	}
 	/**
 	 * @return {String} 垂线上label的文字
 	 **/
 	[_getVerticalDistanceString](p1Geo, p2Geo) {
 		const heights = [p1Geo.height, p2Geo.height]
-		const METERS = Math.max.apply(Math, heights) - Math.min.apply(Math, heights)
+		const METERS =
+			Math.max.apply(Math, heights) - Math.min.apply(Math, heights)
 		if (METERS >= 1000) {
 			return `${(METERS / 1000).toFixed(2)} км`
 		}
@@ -847,7 +948,10 @@ export class RangingTool extends Basic {
 		const geodesic = new this.$Cesium.EllipsoidGeodesic()
 		const scratch = new this.$Cesium.Cartographic()
 		geodesic.setEndPoints(p1.cartographic, p2.cartographic)
-		const midpointCartographic = geodesic.interpolateUsingFraction(0.5, scratch)
+		const midpointCartographic = geodesic.interpolateUsingFraction(
+			0.5,
+			scratch
+		)
 		return this.$Cesium.Cartesian3.fromRadians(
 			midpointCartographic.longitude,
 			midpointCartographic.latitude,

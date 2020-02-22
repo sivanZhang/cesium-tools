@@ -13,21 +13,21 @@ class PromiseChain {
         this.setReject(reject);
     }
 
-    all(...arg) {
+    all(...args) {
         if (this.promises.length === 0) {
             // success Fn
-            console.log(arg,'真正的...arg')
-            this.resolve(arg);
+            console.log(args,'真正的...arg')
+            this.resolve(args)
         } else {
             let current = new Promise(this.promises.shift());
             current.then((res) => {
-                this.all(...arg,res);
-            }).catch((...args) => {
-                console.log(...args, '...errrrrrrrrrr')
+                this.all(...args,res)
+            }).catch((err) => {
+                console.log(err, '...errrrrrrrrrr')
                 while (this.promises.length > 0) {
-                    this.promises.shift();
+                    this.promises.shift()
                 }
-                this.reject(...args);
+                this.reject(...err)
             });
         }
     }
