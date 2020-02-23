@@ -13,7 +13,7 @@
 <script>
 const Cesium = require("cesium/Cesium");
 
-import { RangingTool, DigFill } from "./cesiumTool";
+import DigFill from "./digFill";
 export default {
     name: "CesiumScene",
     data() {
