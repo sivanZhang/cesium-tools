@@ -1,27 +1,32 @@
 import Basic from "./basic"
-
+import CesiumCharts from './CesiumCharts.js'
 export default class DigFill extends Basic {
 	constructor(
 		Cesium,
 		viewer,
-		targerHeight,
-		terrainProvider,
-		granularity = 0.000005
+		config = {
+			targerHeight: null,
+			terrainProvider: null,
+			granularity: 0.000005,
+			isShowEChart:false,
+			echartsID:null
+		}
 	) {
 		super(Cesium, viewer)
 		this.polylines = this.$viewer.scene.primitives.add(
 			new this.$Cesium.PolylineCollection()
 		)
 		// 精度：代表每个网格的边长
-		this.granularity = granularity
-		this.targerHeight = targerHeight
-		this.terrainProvider = terrainProvider
+		this.granularity = config.granularity
+		this.targerHeight = config.targerHeight
+		this.terrainProvider = config.terrainProvider
+		this.cartesianList = []
+		this.cartographicList = []
+		this.echartsID = config.echartsID
 	}
-	onFail() {
-		console.log("onFail")
+	_onFail() {
+		console.log("_onFail")
 	}
-	_cartesianList = []
-	_cartographicList = []
 	test() {
 		this.$bindEvent("LEFT_CLICK", ({ position }) => {
 			let clickCartesian = this.$getPickPosition(position)
@@ -61,7 +66,7 @@ export default class DigFill extends Basic {
 	}
 	start() {
 		this.$Cesium.ArcType
-		this._cartesianList = []
+		this.cartesianList = []
 		const polygon = this.$viewer.entities.add({
 			show: false,
 			polygon: {
@@ -91,8 +96,8 @@ export default class DigFill extends Basic {
 		// 点击选点
 		this.$bindEvent("LEFT_CLICK", ({ position }) => {
 			let clickCartesian = this.$getPickPosition(position)
-			this._cartesianList.push(clickCartesian)
-			let len = this._cartesianList.length
+			this.cartesianList.push(clickCartesian)
+			let len = this.cartesianList.length
 			// 橡皮筋
 			this.$bindEvent("MOUSE_MOVE", ({ endPosition }) => {
 				let moveCartesian = this.$getPickPosition(endPosition)
@@ -106,18 +111,18 @@ export default class DigFill extends Basic {
 					tempLine.polyline.show = false
 					polygon.show = true
 					polygon.polygon.hierarchy = [
-						...this._cartesianList,
+						...this.cartesianList,
 						moveCartesian,
-						this._cartesianList[0]
+						this.cartesianList[0]
 					]
 				}
 			})
 		})
 		this.$bindEvent("RIGHT_CLICK", () => {
-			if (this._cartesianList.length >= 3) {
-				this._cartesianList.push(this._cartesianList[0])
+			if (this.cartesianList.length >= 3) {
+				this.cartesianList.push(this.cartesianList[0])
 				const ellipsoid = this.$Cesium.Ellipsoid.WGS84
-				this._cartographicList = this._cartesianList.map(t => {
+				this.cartographicList = this.cartesianList.map(t => {
 					return this.$Cesium.Cartographic.fromCartesian(t, ellipsoid)
 				})
 				this.$removeEvent()
@@ -127,12 +132,12 @@ export default class DigFill extends Basic {
 				wall.show = true
 				let polygonMaxheigh = this._getMaxHeight()
 				wall.wall.maximumHeights = polygonMaxheigh
-				wall.wall.positions = this._cartesianList
+				wall.wall.positions = this.cartesianList
 
 				/* polygon.show = true
 				polygon.polygon.extrudedHeight = this._getMaxHeight()[0]
 				polygon.polygon.height = this._getMaxHeight()[1]
-				polygon.polygon.hierarchy = this._cartesianList */
+				polygon.polygon.hierarchy = this.cartesianList */
 				this._analyse()
 			}
 		})
@@ -141,12 +146,12 @@ export default class DigFill extends Basic {
 	_getMaxHeight() {
 		let maxHeight = -Infinity
 		// let minHeight = Infinity
-		this._cartographicList.forEach(el => {
+		this.cartographicList.forEach(el => {
 			// minHeight = Math.min(minHeight, el.height)
 			maxHeight = Math.max(maxHeight, el.height)
 		})
 		// return [maxHeight,minHeight]
-		return this._cartographicList.map(() => {
+		return this.cartographicList.map(() => {
 			return maxHeight
 		})
 	}
@@ -160,11 +165,11 @@ export default class DigFill extends Basic {
 		let lat1 = -Infinity
 		let lon2 = Infinity
 		let lat2 = Infinity
-		for (let i = 0; i < this._cartographicList.length; i++) {
-			lon1 = Math.max(this._cartographicList[i].longitude, lon1)
-			lat1 = Math.max(this._cartographicList[i].latitude, lat1)
-			lon2 = Math.min(this._cartographicList[i].longitude, lon2)
-			lat2 = Math.min(this._cartographicList[i].latitude, lat2)
+		for (let i = 0; i < this.cartographicList.length; i++) {
+			lon1 = Math.max(this.cartographicList[i].longitude, lon1)
+			lat1 = Math.max(this.cartographicList[i].latitude, lat1)
+			lon2 = Math.min(this.cartographicList[i].longitude, lon2)
+			lat2 = Math.min(this.cartographicList[i].latitude, lat2)
 		}
 		//  分成网格
 		const lonArray = [],
@@ -235,7 +240,7 @@ export default class DigFill extends Basic {
 		Promise.all(promises).then(matrix => {
 			this._onSuccess(matrix)
 		}).catch(err => {
-			this.onFail()
+			this._onFail()
 		})
 	}
 	// 去除包围盒边界到多边形边界的方格   边界外的对象 = 0失败
@@ -300,7 +305,7 @@ export default class DigFill extends Basic {
 			avgFillHeight = this.targerHeight
 		}
 		let fillArea =
-				(totalArea * avgFillHeight) / (avgFillHeight + avgDigHeight),
+			(totalArea * avgFillHeight) / (avgFillHeight + avgDigHeight),
 			digArea =
 				(totalArea * avgDigHeight) / (avgFillHeight + avgDigHeight)
 
@@ -310,13 +315,17 @@ export default class DigFill extends Basic {
 			fillAmount: fillArea * avgFillHeight,
 			digAmount: digArea * avgDigHeight
 		}
-		console.log("returnData", returns)
+
+		!this.echartsID && this._showEcahrts(returns)
+	}
+	_showEcahrts(data){
+		console.log(data,'ecahrtsecahrtsecahrtsecahrtsecahrtsecahrts')
 	}
 	_getAllArea() {
 		let area = 0
-		for (let i = 0; i < this._cartographicList.length - 1; i++) {
-			let p1 = this._cartographicList[i]
-			let p2 = this._cartographicList[i + 1]
+		for (let i = 0; i < this.cartographicList.length - 1; i++) {
+			let p1 = this.cartographicList[i]
+			let p2 = this.cartographicList[i + 1]
 			area +=
 				(p2.longitude - p1.longitude) *
 				(2 + Math.sin(p1.latitude) + Math.sin(p2.latitude))
@@ -326,7 +335,7 @@ export default class DigFill extends Basic {
 			(area *
 				this.$viewer.scene.globe.ellipsoid.radii.x *
 				this.$viewer.scene.globe.ellipsoid.radii.y) /
-				2.0
+			2.0
 		)
 	}
 	/**
@@ -338,25 +347,25 @@ export default class DigFill extends Basic {
 		if (this._isVertix(currentPoint)) return true
 		let flag = false
 		for (
-			let i = 0, l = this._cartographicList.length, j = l - 1;
+			let i = 0, l = this.cartographicList.length, j = l - 1;
 			i < l;
 			j = i, i++
 		) {
 			if (
-				(this._cartographicList[i].latitude < currentPoint.latitude &&
-					this._cartographicList[j].latitude >=
-						currentPoint.latitude) ||
-				(this._cartographicList[i].latitude >= currentPoint.latitude &&
-					this._cartographicList[j].latitude < currentPoint.latitude)
+				(this.cartographicList[i].latitude < currentPoint.latitude &&
+					this.cartographicList[j].latitude >=
+					currentPoint.latitude) ||
+				(this.cartographicList[i].latitude >= currentPoint.latitude &&
+					this.cartographicList[j].latitude < currentPoint.latitude)
 			) {
 				let longitude =
-					this._cartographicList[i].longitude +
+					this.cartographicList[i].longitude +
 					((currentPoint.latitude -
-						this._cartographicList[i].latitude) *
-						(this._cartographicList[j].longitude -
-							this._cartographicList[i].longitude)) /
-						(this._cartographicList[j].latitude -
-							this._cartographicList[i].latitude)
+						this.cartographicList[i].latitude) *
+						(this.cartographicList[j].longitude -
+							this.cartographicList[i].longitude)) /
+					(this.cartographicList[j].latitude -
+						this.cartographicList[i].latitude)
 
 				if (longitude === currentPoint.longitude) {
 					return true
@@ -371,8 +380,8 @@ export default class DigFill extends Basic {
 		return flag
 	}
 	_isVertix(currentPoint) {
-		for (let i = 0; i < this._cartographicList.length; i++) {
-			if (this._equals(currentPoint, this._cartographicList[i])) {
+		for (let i = 0; i < this.cartographicList.length; i++) {
+			if (this._equals(currentPoint, this.cartographicList[i])) {
 				return true
 			}
 		}
@@ -396,26 +405,26 @@ export default class DigFill extends Basic {
 			return (
 				(currentPoint.longitude > 0
 					? this._inRange(
-							currentPoint.longitude * (1 - epsilon / 10000),
-							currentPoint.longitude * (1 + epsilon / 10000),
-							target.x
-					  )
+						currentPoint.longitude * (1 - epsilon / 10000),
+						currentPoint.longitude * (1 + epsilon / 10000),
+						target.x
+					)
 					: this._inRange(
-							currentPoint.longitude * (1 + epsilon / 10000),
-							currentPoint.longitude * (1 - epsilon / 10000),
-							target.longitude
-					  )) &&
+						currentPoint.longitude * (1 + epsilon / 10000),
+						currentPoint.longitude * (1 - epsilon / 10000),
+						target.longitude
+					)) &&
 				(currentPoint.latitude > 0
 					? this._inRange(
-							currentPoint.latitude * (1 - epsilon / 10000),
-							currentPoint.latitude * (1 + epsilon / 10000),
-							target.latitude
-					  )
+						currentPoint.latitude * (1 - epsilon / 10000),
+						currentPoint.latitude * (1 + epsilon / 10000),
+						target.latitude
+					)
 					: this._inRange(
-							currentPoint.latitude * (1 + epsilon / 10000),
-							currentPoint.latitude * (1 - epsilon / 10000),
-							target.latitude
-					  ))
+						currentPoint.latitude * (1 + epsilon / 10000),
+						currentPoint.latitude * (1 - epsilon / 10000),
+						target.latitude
+					))
 			)
 		}
 	}
