@@ -1,4 +1,4 @@
-import Basic from "./basic"
+import Basic from './basic'
 import CesiumCharts from './CesiumCharts.js'
 export default class DigFill extends Basic {
 	constructor(
@@ -7,9 +7,9 @@ export default class DigFill extends Basic {
 		config = {
 			targerHeight: null,
 			terrainProvider: null,
-			granularity: 0.000005,
-			isShowEChart:false,
-			echartsID:null
+			granularity: 0.000001,
+			isShowEChart: false,
+			echartsID: null
 		}
 	) {
 		super(Cesium, viewer)
@@ -25,10 +25,10 @@ export default class DigFill extends Basic {
 		this.echartsID = config.echartsID
 	}
 	_onFail() {
-		console.log("_onFail")
+		console.log('_onFail')
 	}
 	test() {
-		this.$bindEvent("LEFT_CLICK", ({ position }) => {
+		this.$bindEvent('LEFT_CLICK', ({ position }) => {
 			let clickCartesian = this.$getPickPosition(position)
 			const ellipsoid = this.$Cesium.Ellipsoid.WGS84
 			const terrainProvider = this.$Cesium.createWorldTerrain()
@@ -48,18 +48,15 @@ export default class DigFill extends Basic {
 				)
 				//tmp.push(new Point(lonArray[i], latArray[j], 0));
 			})
-			console.log("------hhhhhhhhhhh--------", arr, temp)
-			var promise = this.$Cesium.sampleTerrainMostDetailed(
-				terrainProvider,
-				temp
-			)
+			console.log('------hhhhhhhhhhh--------', arr, temp)
+			var promise = this.$Cesium.sampleTerrainMostDetailed(terrainProvider, temp)
 			this.$Cesium.when(
 				promise,
 				as => {
-					console.log("--------------", as)
+					console.log('--------------', as)
 				},
 				err => {
-					console.error(err, "errerrerrerrerr")
+					console.error(err, 'errerrerrerrerr')
 				}
 			)
 		})
@@ -94,19 +91,16 @@ export default class DigFill extends Basic {
 			}
 		})
 		// 点击选点
-		this.$bindEvent("LEFT_CLICK", ({ position }) => {
+		this.$bindEvent('LEFT_CLICK', ({ position }) => {
 			let clickCartesian = this.$getPickPosition(position)
 			this.cartesianList.push(clickCartesian)
 			let len = this.cartesianList.length
 			// 橡皮筋
-			this.$bindEvent("MOUSE_MOVE", ({ endPosition }) => {
+			this.$bindEvent('MOUSE_MOVE', ({ endPosition }) => {
 				let moveCartesian = this.$getPickPosition(endPosition)
 				tempLine.polyline.show = true
 				if (len === 1) {
-					tempLine.polyline.positions = [
-						clickCartesian,
-						moveCartesian
-					]
+					tempLine.polyline.positions = [clickCartesian, moveCartesian]
 				} else if (len >= 2) {
 					tempLine.polyline.show = false
 					polygon.show = true
@@ -118,7 +112,7 @@ export default class DigFill extends Basic {
 				}
 			})
 		})
-		this.$bindEvent("RIGHT_CLICK", () => {
+		this.$bindEvent('RIGHT_CLICK', () => {
 			if (this.cartesianList.length >= 3) {
 				this.cartesianList.push(this.cartesianList[0])
 				const ellipsoid = this.$Cesium.Ellipsoid.WGS84
@@ -207,7 +201,9 @@ export default class DigFill extends Basic {
 			})
 			matrix.push(temp)
 		})
+		console.log(matrix,'matrixmatrixmatrixmatrixmatrixmatrixmatrixmatrix1');
 		matrix = this._excludeBound(matrix)
+		console.log(matrix,'matrixmatrixmatrixmatrixmatrixmatrixmatrixmatrix2');
 		let promises = []
 		const terrainProvider = this.$Cesium.createWorldTerrain()
 		for (let i = 0; i < matrix.length; i++) {
@@ -237,11 +233,13 @@ export default class DigFill extends Basic {
 				promises.push(tmpFunction)
 			}
 		}
-		Promise.all(promises).then(matrix => {
-			this._onSuccess(matrix)
-		}).catch(err => {
-			this._onFail()
-		})
+		Promise.all(promises)
+			.then(matrix => {
+				this._onSuccess(matrix)
+			})
+			.catch(err => {
+				this._onFail(err)
+			})
 	}
 	// 去除包围盒边界到多边形边界的方格   边界外的对象 = 0失败
 	_excludeBound(matrix) {
@@ -256,13 +254,13 @@ export default class DigFill extends Basic {
 	}
 	_onSuccess(matrix) {
 		if (matrix) {
-			this._getPropertiesNumber(matrix)
+			this._getdata(matrix)
 		} else {
-			console.log("挖方区域面积过小，无法计算土方体积")
+			console.log('挖方区域面积过小，无法计算土方体积')
 		}
 		this.targerHeight = null
 	}
-	_getPropertiesNumber(matrix) {
+	_getdata(matrix) {
 		if (!this.targerHeight) {
 			// 如果基准高没有 获取基准高
 			let sum = 0,
@@ -304,10 +302,8 @@ export default class DigFill extends Basic {
 		if (fillCount === 0 && fillHeight === 0) {
 			avgFillHeight = this.targerHeight
 		}
-		let fillArea =
-			(totalArea * avgFillHeight) / (avgFillHeight + avgDigHeight),
-			digArea =
-				(totalArea * avgDigHeight) / (avgFillHeight + avgDigHeight)
+		let fillArea = (totalArea * avgFillHeight) / (avgFillHeight + avgDigHeight),
+			digArea = (totalArea * avgDigHeight) / (avgFillHeight + avgDigHeight)
 
 		let returns = {
 			fillArea: fillArea,
@@ -316,10 +312,99 @@ export default class DigFill extends Basic {
 			digAmount: digArea * avgDigHeight
 		}
 
-		!this.echartsID && this._showEcahrts(returns)
+		!this.echartsID && this._showEcahrts(returns, matrix)
 	}
-	_showEcahrts(data){
-		console.log(data,'ecahrtsecahrtsecahrtsecahrtsecahrtsecahrts')
+	_showEcahrts(data, matrix, digColor = '#FF8C37', fillColor = '#ffaaff') {
+		let img = new Image()
+		img.height = matrix[0].length
+		img.width = matrix.length
+		let canvas = document.createElement('canvas')
+		canvas.height = img.height
+		canvas.width = img.width
+		let ctx = canvas.getContext('2d')
+		let text = `挖填方分析
+        
+        挖掘土方量: ${data.digAmount || 0} 立方米
+        
+        挖掘面积: ${data.digArea || 0} 平方米
+        
+        填埋土方量: ${data.fillAmount || 0} 立方米
+        
+        填埋面积: ${data.fillArea || 0} 平方米`
+
+		if (
+			isNaN(data.digAmount) ||
+			isNaN(data.digArea) ||
+			isNaN(data.fillAmount) ||
+			isNaN(data.fillArea)
+		) {
+			text = `
+                   挖填方分析
+            
+            此处地形数据未达到
+            
+            所需精度要求，无法
+            
+            计算土方量！`
+		}
+
+		ctx.drawImage(img, 0, 0, img.width, img.height)
+		let imgDataArray = DigFill.imageColorArray(
+			ctx.getImageData(0, 0, img.width, img.height),
+			matrix,
+			DigFill.hex2Rgba(digColor),
+			DigFill.hex2Rgba(fillColor)
+		)
+		const option = {
+			
+		}
+		const MyCharts = new CesiumCharts(this.echartsID,"light", option)
+	}
+	static imageColorArray(imgData, matrix, digColor, fillColor) {
+		let imgDataArray = imgData.data
+		let heightArray = []
+		let max = -Infinity,
+			min = Infinity
+		for (let i = 0; i < imgDataArray.length / 4; i++) {
+			let width = i % imgData.width,
+				height = imgData.height - Math.floor(i / imgData.width)
+			if (matrix[width][height - 1] !== 0) {
+				if (matrix[width][height - 1].Speed3DEWA === 1) {
+					imgDataArray[i * 4] = digColor.r
+					imgDataArray[i * 4 + 1] = digColor.g
+					imgDataArray[i * 4 + 2] = digColor.b
+					imgDataArray[i * 4 + 3] = 255
+				} else if (matrix[width][height - 1].Speed3DEWA === 2) {
+					imgDataArray[i * 4] = fillColor.r
+					imgDataArray[i * 4 + 1] = fillColor.g
+					imgDataArray[i * 4 + 2] = fillColor.b
+					imgDataArray[i * 4 + 3] = 255
+				}
+				heightArray.push([width, height, matrix[width][height - 1].height])
+				max = Math.max(max, matrix[width][height - 1].height)
+				min = Math.min(min, matrix[width][height - 1].height)
+			} else {
+				heightArray.push([width, height, 0])
+			}
+		}
+
+		for (let i = 0; i < heightArray.length; i++) {
+			if (heightArray[i][2] === 0) heightArray[i][2] = min
+		}
+
+		heightArray.push(Math.floor(max + 10), Math.floor(min - 10))
+
+		return {
+			data: imgDataArray,
+			height: heightArray
+		}
+	}
+	static hex2Rgba(hex) {
+		return {
+			r: parseInt("0x" + hex.slice(1, 3)),
+			g: parseInt("0x" + hex.slice(3, 5)),
+			b: parseInt("0x" + hex.slice(5, 7))
+		}
 	}
 	_getAllArea() {
 		let area = 0
@@ -335,7 +420,7 @@ export default class DigFill extends Basic {
 			(area *
 				this.$viewer.scene.globe.ellipsoid.radii.x *
 				this.$viewer.scene.globe.ellipsoid.radii.y) /
-			2.0
+				2.0
 		)
 	}
 	/**
@@ -346,26 +431,20 @@ export default class DigFill extends Basic {
 	_contains(currentPoint) {
 		if (this._isVertix(currentPoint)) return true
 		let flag = false
-		for (
-			let i = 0, l = this.cartographicList.length, j = l - 1;
-			i < l;
-			j = i, i++
-		) {
+		for (let i = 0, l = this.cartographicList.length, j = l - 1; i < l; j = i, i++) {
 			if (
 				(this.cartographicList[i].latitude < currentPoint.latitude &&
-					this.cartographicList[j].latitude >=
-					currentPoint.latitude) ||
+					this.cartographicList[j].latitude >= currentPoint.latitude) ||
 				(this.cartographicList[i].latitude >= currentPoint.latitude &&
 					this.cartographicList[j].latitude < currentPoint.latitude)
 			) {
 				let longitude =
 					this.cartographicList[i].longitude +
-					((currentPoint.latitude -
-						this.cartographicList[i].latitude) *
+					((currentPoint.latitude - this.cartographicList[i].latitude) *
 						(this.cartographicList[j].longitude -
 							this.cartographicList[i].longitude)) /
-					(this.cartographicList[j].latitude -
-						this.cartographicList[i].latitude)
+						(this.cartographicList[j].latitude -
+							this.cartographicList[i].latitude)
 
 				if (longitude === currentPoint.longitude) {
 					return true
@@ -405,26 +484,26 @@ export default class DigFill extends Basic {
 			return (
 				(currentPoint.longitude > 0
 					? this._inRange(
-						currentPoint.longitude * (1 - epsilon / 10000),
-						currentPoint.longitude * (1 + epsilon / 10000),
-						target.x
-					)
+							currentPoint.longitude * (1 - epsilon / 10000),
+							currentPoint.longitude * (1 + epsilon / 10000),
+							target.x
+					  )
 					: this._inRange(
-						currentPoint.longitude * (1 + epsilon / 10000),
-						currentPoint.longitude * (1 - epsilon / 10000),
-						target.longitude
-					)) &&
+							currentPoint.longitude * (1 + epsilon / 10000),
+							currentPoint.longitude * (1 - epsilon / 10000),
+							target.longitude
+					  )) &&
 				(currentPoint.latitude > 0
 					? this._inRange(
-						currentPoint.latitude * (1 - epsilon / 10000),
-						currentPoint.latitude * (1 + epsilon / 10000),
-						target.latitude
-					)
+							currentPoint.latitude * (1 - epsilon / 10000),
+							currentPoint.latitude * (1 + epsilon / 10000),
+							target.latitude
+					  )
 					: this._inRange(
-						currentPoint.latitude * (1 + epsilon / 10000),
-						currentPoint.latitude * (1 - epsilon / 10000),
-						target.latitude
-					))
+							currentPoint.latitude * (1 + epsilon / 10000),
+							currentPoint.latitude * (1 - epsilon / 10000),
+							target.latitude
+					  ))
 			)
 		}
 	}
