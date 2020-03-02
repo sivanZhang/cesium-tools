@@ -4,18 +4,20 @@ export default class DigFill extends Basic {
 	constructor(
 		Cesium,
 		viewer,
-		config = {
-			targerHeight: null,
-			terrainProvider: null,
-			granularity: 0.000001,
-			isShowEChart: false,
-			echartsID: null
-		}
+		config
 	) {
 		super(Cesium, viewer)
 		this.polylines = this.$viewer.scene.primitives.add(
 			new this.$Cesium.PolylineCollection()
 		)
+		config = {
+			targerHeight: null,
+			terrainProvider: null,
+			granularity: 0.00001,
+			isShowEChart: false,
+			echartsID: null,
+			...config
+		}
 		// 精度：代表每个网格的边长
 		this.granularity = config.granularity
 		this.targerHeight = config.targerHeight
@@ -31,7 +33,7 @@ export default class DigFill extends Basic {
 		this.$bindEvent('LEFT_CLICK', ({ position }) => {
 			let clickCartesian = this.$getPickPosition(position)
 			const ellipsoid = this.$Cesium.Ellipsoid.WGS84
-			const terrainProvider = this.$Cesium.createWorldTerrain()
+			// const terrainProvider = this.$Cesium.createWorldTerrain()
 			let cartographic = this.$Cesium.Cartographic.fromCartesian(
 				clickCartesian,
 				ellipsoid
@@ -49,7 +51,7 @@ export default class DigFill extends Basic {
 				//tmp.push(new Point(lonArray[i], latArray[j], 0));
 			})
 			console.log('------hhhhhhhhhhh--------', arr, temp)
-			var promise = this.$Cesium.sampleTerrainMostDetailed(terrainProvider, temp)
+			var promise = this.$Cesium.sampleTerrainMostDetailed(this.terrainProvider, temp)
 			this.$Cesium.when(
 				promise,
 				as => {
@@ -205,7 +207,7 @@ export default class DigFill extends Basic {
 		matrix = this._excludeBound(matrix)
 		console.log(matrix,'matrixmatrixmatrixmatrixmatrixmatrixmatrixmatrix2');
 		let promises = []
-		const terrainProvider = this.$Cesium.createWorldTerrain()
+		// const terrainProvider = this.$Cesium.createWorldTerrain()
 		for (let i = 0; i < matrix.length; i++) {
 			let temp = [] // matrix  变成一位数组
 			for (let j = 0; j < matrix[i].length; j++) {
@@ -217,7 +219,7 @@ export default class DigFill extends Basic {
 				let tmpFunction = new Promise((resolve, reject) => {
 					// → Promise.<Array.< Cartographic >>
 					const TerrainPromise = this.$Cesium.sampleTerrainMostDetailed(
-						terrainProvider,
+						this.terrainProvider,
 						temp
 					)
 					this.$Cesium.when(
@@ -349,16 +351,17 @@ export default class DigFill extends Basic {
 		}
 
 		ctx.drawImage(img, 0, 0, img.width, img.height)
+		console.log(ctx.getImageData(0, 0, img.width, img.height),'iiiiiiiiiiiiimmmmmmmmmmmmmmmmmmmmmggggggggggggg');
 		let imgDataArray = DigFill.imageColorArray(
 			ctx.getImageData(0, 0, img.width, img.height),
 			matrix,
 			DigFill.hex2Rgba(digColor),
 			DigFill.hex2Rgba(fillColor)
 		)
-		const option = {
+		// const option = {
 			
-		}
-		const MyCharts = new CesiumCharts(this.echartsID,"light", option)
+		// }
+		// const MyCharts = new CesiumCharts(this.echartsID,"light", option)
 	}
 	static imageColorArray(imgData, matrix, digColor, fillColor) {
 		let imgDataArray = imgData.data
