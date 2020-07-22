@@ -13,7 +13,7 @@ export default class DigFill extends Basic {
 		config = {
 			targerHeight: null,
 			terrainProvider: null,
-			granularity: 0.00001,
+			granularity: this.$Cesium.Math.EPSILON5,
 			isShowEChart: false,
 			echartsID: null,
 			...config
@@ -129,7 +129,7 @@ export default class DigFill extends Basic {
 				let polygonMaxheigh = this._getMaxHeight()
 				wall.wall.maximumHeights = polygonMaxheigh
 				wall.wall.positions = this.cartesianList
-
+				console.log('cartographicList',this.cartographicList);
 				/* polygon.show = true
 				polygon.polygon.extrudedHeight = this._getMaxHeight()[0]
 				polygon.polygon.height = this._getMaxHeight()[1]
@@ -199,13 +199,13 @@ export default class DigFill extends Basic {
 			let temp = []
 			latArray.forEach(lat => {
 				temp.push(this.$Cesium.Cartographic.fromRadians(lon, lat, 0))
+				console.log('fromRadians',temp);
 				//tmp.push(new Point(lonArray[i], latArray[j], 0));
 			})
 			matrix.push(temp)
 		})
-		console.log(matrix,'matrixmatrixmatrixmatrixmatrixmatrixmatrixmatrix1');
 		matrix = this._excludeBound(matrix)
-		console.log(matrix,'matrixmatrixmatrixmatrixmatrixmatrixmatrixmatrix2');
+		console.log(matrix,'_excludeBoundxmatrix2');
 		let promises = []
 		// const terrainProvider = this.$Cesium.createWorldTerrain()
 		for (let i = 0; i < matrix.length; i++) {
@@ -237,6 +237,7 @@ export default class DigFill extends Basic {
 		}
 		Promise.all(promises)
 			.then(matrix => {
+				console.log(matrix,'Promise.all')
 				this._onSuccess(matrix)
 			})
 			.catch(err => {
@@ -313,7 +314,7 @@ export default class DigFill extends Basic {
 			fillAmount: fillArea * avgFillHeight,
 			digAmount: digArea * avgDigHeight
 		}
-
+		console.log(returns,'returns');
 		!this.echartsID && this._showEcahrts(returns, matrix)
 	}
 	_showEcahrts(data, matrix, digColor = '#FF8C37', fillColor = '#ffaaff') {
@@ -469,7 +470,7 @@ export default class DigFill extends Basic {
 		}
 		return false
 	}
-	_equals(currentPoint, target, epsilon = 0.00000001) {
+	_equals(currentPoint, target, epsilon = this.$Cesium.Math.EPSILON7) {
 		if (epsilon < 1) {
 			return (
 				this._inRange(

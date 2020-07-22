@@ -42,7 +42,6 @@ module.exports = {
       })
     ],
     module: {
-      unknownContextCritical: /^.\/.*$/,
       unknownContextCritical: false
     }
   }

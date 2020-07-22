@@ -57,11 +57,13 @@ export default class MeasuringHeight extends Basic {
                         circle = this.$viewer.entities.add({
                             ellipse: {
                                 material: this.$Cesium.Color.WHITE.withAlpha(
-                                    0.3
+                                    0.5
                                 ),
+                                // material: this.$Cesium.Color.WHITE,
                                 show: false,
-                                semiMinorAxis: 50,
-                                semiMajorAxis: 50
+                                semiMinorAxis: 5000,
+                                semiMajorAxis: 5000,
+                                extrudedHeight:1
                             }
                         })
                         polyline = this.polylines.add({
@@ -168,7 +170,7 @@ export default class MeasuringHeight extends Basic {
                             ]
 
                             circle.position = point1.position
-                            circle.ellipse.height = point3GeoPosition.height
+                            circle.ellipse.height = 1
                             circle.ellipse.show = true
 
                             labelHeight =

@@ -259,14 +259,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Core_MouseHandlers_MeasureTools_Perimeter_js__WEBPACK_IMPORTED_MODULE_149__ = __webpack_require__(172);
 /* harmony import */ var _Core_MouseHandlers_MeasureTools_SpaceDistance_js__WEBPACK_IMPORTED_MODULE_150__ = __webpack_require__(173);
 /* harmony import */ var _Core_MouseHandlers_MeasureTools_Height_js__WEBPACK_IMPORTED_MODULE_151__ = __webpack_require__(174);
-/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_Slope_js__WEBPACK_IMPORTED_MODULE_152__ = __webpack_require__(175);
-/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_Profile_js__WEBPACK_IMPORTED_MODULE_153__ = __webpack_require__(176);
-/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_EarthWork_js__WEBPACK_IMPORTED_MODULE_154__ = __webpack_require__(177);
-/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_PointBuffer_js__WEBPACK_IMPORTED_MODULE_155__ = __webpack_require__(178);
-/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_LineStringBuffer_js__WEBPACK_IMPORTED_MODULE_156__ = __webpack_require__(179);
-/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_PolygonBuffer_js__WEBPACK_IMPORTED_MODULE_157__ = __webpack_require__(180);
-/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_Visibility_js__WEBPACK_IMPORTED_MODULE_158__ = __webpack_require__(181);
-/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_Viewshed_js__WEBPACK_IMPORTED_MODULE_159__ = __webpack_require__(182);
+/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_Slope_js__WEBPACK_IMPORTED_MODULE_152__ = __webpack_require__(177);
+/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_Profile_js__WEBPACK_IMPORTED_MODULE_153__ = __webpack_require__(178);
+/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_EarthWork_js__WEBPACK_IMPORTED_MODULE_154__ = __webpack_require__(179);
+/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_PointBuffer_js__WEBPACK_IMPORTED_MODULE_155__ = __webpack_require__(180);
+/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_LineStringBuffer_js__WEBPACK_IMPORTED_MODULE_156__ = __webpack_require__(181);
+/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_PolygonBuffer_js__WEBPACK_IMPORTED_MODULE_157__ = __webpack_require__(182);
+/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_Visibility_js__WEBPACK_IMPORTED_MODULE_158__ = __webpack_require__(183);
+/* harmony import */ var _Core_MouseHandlers_AnalyzeTools_Viewshed_js__WEBPACK_IMPORTED_MODULE_159__ = __webpack_require__(184);
 /* harmony import */ var _turf_turf__WEBPACK_IMPORTED_MODULE_160__ = __webpack_require__(21);
 /* harmony import */ var _turf_turf__WEBPACK_IMPORTED_MODULE_160___default = /*#__PURE__*/__webpack_require__.n(_turf_turf__WEBPACK_IMPORTED_MODULE_160__);
 
@@ -806,6 +806,7 @@ class Billboard extends _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"] {
                                 width: this.width / this.factor,
                                 height: this.height / this.factor,
                 */
+                // scaleByDistance:new dependence.Cesium.NearFarScalar(),
                 clampToGround: /*Speed3D_viewer.viewer.scene.mode !== 2 && */this.clampToGround,
                 color: this.color ? _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_2__["SpeedColor"].hex2CesiumColor(config.color) : _Constants_js__WEBPACK_IMPORTED_MODULE_1__["dependence"].Cesium.Color.WHITE,
                 show: config.show === false ? config.show : true,
@@ -818,6 +819,9 @@ class Billboard extends _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"] {
             }
         };
 
+        if (config.scaleByDistance) {
+            result.billboard.scaleByDistance = new _Constants_js__WEBPACK_IMPORTED_MODULE_1__["dependence"].Cesium.NearFarScalar(config.scaleByDistance.near || 0.0, config.scaleByDistance.nearValue || 0.0, config.scaleByDistance.far || 1.0, config.scaleByDistance.farValue || 0.0);
+        }
         /*
                 if(Speed3D_viewer.viewer.scene.mode === 2) {
                     result.billboard.heightReference = this.clampToGround?dependence.Cesium.HeightReference.CLAMP_TO_GROUND:dependence.Cesium.HeightReference.NONE
@@ -856,6 +860,9 @@ class Billboard extends _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"] {
 
     //设置url
     setUrl(url) {
+        if (!url) {
+            url = '../../static/image/锚点-30px.png';
+        }
         if (!this.entity || !url) {
             return;
         }
@@ -1189,7 +1196,7 @@ class Entity {
         };
     }
     //实体通用飞行
-    zoomTo() {
+    zoomTo(options) {
         if (this.type === 'linestring' || this.type === 'polygon') {
             let boundingbox = this.getBoundingBox(this);
             setTimeout(() => {
@@ -1200,9 +1207,15 @@ class Entity {
                 _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer.camera.zoomOut(distance * 10000);
             }, 100);
         } else {
-            _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer.camera.setView({
-                destination: _Constants_js__WEBPACK_IMPORTED_MODULE_0__["dependence"].Cesium.Cartesian3.fromDegrees(this.position[0], this.position[1])
+            let lon = options ? options.lon || this.position[0] : this.position[0];
+            let lat = options ? options.lat || this.position[1] : this.position[1];
+            let height = options ? options.height || 50000 : 50000;
+            if (options) _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer.camera.setView({
+                destination: new _Constants_js__WEBPACK_IMPORTED_MODULE_0__["dependence"].Cesium.Rectangle.fromDegrees(lon - 0.005, lat - 0.005, lon + 0.005, lat + 0.005)
+                // destination : dependence.Cesium.Cartesian3.fromDegrees(lon || this.position[0], lat || this.position[1]) //,height || 50000
             });
+
+            _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer.camera.zoomOut(height);
         }
     }
 }
@@ -3221,8 +3234,7 @@ class Material {
         if (config.url !== undefined && config.url !== null && config.url !== '') {
             return config.url;
         };
- }
-        iffig.style === 'Grid') {
+        if (config.style === 'Grid') {
             return new _Constants_js__WEBPACK_IMPORTED_MODULE_0__["dependence"].Cesium.GridMaterialProperty({
                 color: _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_1__["SpeedColor"].hex2CesiumColor(config.color),
                 cellAlpha: config.cellAlpha ? config.cellAlpha : 0.1,
@@ -4012,329 +4024,326 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class Line extends _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"] {
-    constructor(config, needInit = true) {
-        super(config);
-        let result = {};
-        //材质
-        this.linematerial = [];
-        //材质配置项
-        this.linematerialoptions = config.linematerialoptions ? config.linematerialoptions : undefined;
-        this.position = config.position ? config.position : undefined;
-        this.width = Number(config.width) ? Number(config.width) : 5;
-        this.color = config.color ? config.color : '#FF8C37';
-        this.style = config.style ? config.style : 'Normal';
-        this.clampToGround = config.clampToGround === false ? config.clampToGround : true;
-        this.show = config.show === false ? config.show : true;
-        this.outlineWidth = Number(config.outlineWidth) ? Number(config.outlineWidth) : 2;
-        this.outlineColor = config.outlineColor ? config.outlineColor : '#000000';
-        this.opacity = Number(config.opacity) ? Number(config.opacity) : 1;
-        this.type = config.type ? config.type : 'linestring';
-        this._scale = 1;
-        if (!this.position) {
-            throw new Error('必须传递线的顶点坐标');
-        }
-        this.positions = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].handlePositon(this.position, true);
-        result = {
-            name: this,
-            id: this.id,
-            polyline: {
-                positions: this.positions,
-                width: this.width,
-                outLine: true,
-                zIndex: this.zIndex,
-                clampToGround: true,
-                color: this.color,
-                heightReference: this.clampToGround ? _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.HeightReference.CLAMP_TO_GROUND : _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.HeightReference.NONE
-            }
-        };
-        if (this.clampToGround === false) {
-            result.polyline.height = 0;
-        }
-        if (this.style) {
-            result.polyline.material = _Entity_Material_js__WEBPACK_IMPORTED_MODULE_4__["Material"].handleLineMaterial(this.style, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.color), this.outlineWidth, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.outlineColor));
-        }
-        this.entity = _Constants_js__WEBPACK_IMPORTED_MODULE_2__["Speed3D_viewer"].viewer.entities.add(result);
-        if (this.show === false) {
-            this.setShow(this.show);
-        }
-        if (config instanceof _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"] === false) this.attr = _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"].checkInput(config, this);
-        this.setAlpha(this.opacity, true);
-        this._createLineMaterials();
+  constructor(config, needInit = true) {
+    super(config);
+    let result = {};
+    //材质
+    this.linematerial = [];
+    //材质配置项
+    this.linematerialoptions = config.linematerialoptions ? config.linematerialoptions : undefined;
+    this.position = config.position ? config.position : undefined;
+    this.width = Number(config.width) ? Number(config.width) : 5;
+    this.color = config.color ? config.color : "#FF8C37";
+    this.style = config.style ? config.style : "Normal";
+    this.clampToGround = config.clampToGround || false;
+    this.show = config.show === false ? config.show : true;
+    this.outlineWidth = Number(config.outlineWidth) ? Number(config.outlineWidth) : 2;
+    this.outlineColor = config.outlineColor ? config.outlineColor : "#000000";
+    this.opacity = Number(config.opacity) ? Number(config.opacity) : 1;
+    this.type = config.type ? config.type : "linestring";
+    this._scale = 1;
+    if (!this.position) {
+      throw new Error("必须传递线的顶点坐标");
     }
+    this.positions = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].handlePositon(this.position, true);
+    result = {
+      name: this,
+      id: this.id,
+      polyline: {
+        positions: this.positions,
+        width: this.width,
+        outLine: true,
+        zIndex: this.zIndex,
+        clampToGround: this.clampToGround,
+        color: this.color
+      }
+    };
+    if (this.style) {
+      const MaterialProperty = _Entity_Material_js__WEBPACK_IMPORTED_MODULE_4__["Material"].handleLineMaterial(this.style, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.color), this.outlineWidth, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.outlineColor));
+      result.polyline.material = result.polyline.depthFailMaterial = MaterialProperty;
+    }
+    this.entity = _Constants_js__WEBPACK_IMPORTED_MODULE_2__["Speed3D_viewer"].viewer.entities.add(result);
+    if (this.show === false) {
+      this.setShow(this.show);
+    }
+    if (config instanceof _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"] === false) this.attr = _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"].checkInput(config, this);
+    this.setAlpha(this.opacity, true);
+    this._createLineMaterials();
+  }
 
-    toGeojson() {
-        return {
-            type: "LineString", coordinates: _Util_toJSONUtil_js__WEBPACK_IMPORTED_MODULE_6__["toJSONUtil"].toGeojson(this.position)
-        };
+  toGeojson() {
+    return {
+      type: "LineString",
+      coordinates: _Util_toJSONUtil_js__WEBPACK_IMPORTED_MODULE_6__["toJSONUtil"].toGeojson(this.position)
+    };
+  }
+  //根据配置生成填充材质
+  _createLineMaterials() {
+    if (!this.linematerialoptions) {
+      return;
     }
-    //根据配置生成填充材质
-    _createLineMaterials() {
-        if (!this.linematerialoptions) {
-            return;
-        }
-        this.linematerialoptions.forEach(item => {
-            let obj1 = {
-                lines: this
-            };
-            let obj2 = Object.assign(obj1, item);
-            this.linematerial.push(new _Material_LineMaterial_js__WEBPACK_IMPORTED_MODULE_1__["LineMaterial"](obj2));
-        });
+    this.linematerialoptions.forEach(item => {
+      let obj1 = {
+        lines: this
+      };
+      let obj2 = Object.assign(obj1, item);
+      this.linematerial.push(new _Material_LineMaterial_js__WEBPACK_IMPORTED_MODULE_1__["LineMaterial"](obj2));
+    });
+  }
+  //动态更新线材质
+  _updateLineMaterials() {
+    if (!this.linematerialoptions) {
+      return;
     }
-    //动态更新线材质
-    _updateLineMaterials() {
-        if (!this.linematerialoptions) {
-            return;
-        }
-        this.linematerial.forEach(item => {
-            item.destroy();
-        });
-        this.linematerial = [];
-        this._createLineMaterials();
+    this.linematerial.forEach(item => {
+      item.destroy();
+    });
+    this.linematerial = [];
+    this._createLineMaterials();
+  }
+  //位置移动
+  setPosition(path, isconst = false) {
+    if (!this.entity) {
+      return;
     }
-    //位置移动
-    setPosition(path, isconst = false) {
-        if (!this.entity) {
-            return;
-        }
-        if (!path || path.length === 0) {
-            return;
-        }
-        let callback = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
-            return _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].handlePositon(path, true);
-        }, isconst);
-        this.entity.polyline.positions = callback;
-        //维护坐标
-        let arr = [];
-        if (path[0] && path[0] instanceof _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Cartesian3) {
-            path.forEach(item => {
-                arr = arr.concat(_Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].cartesian2LonLat(item));
-            });
-        } else if (path instanceof _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Cartesian3) {
-            arr = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].cartesian2LonLat(path);
+    if (!path || path.length === 0) {
+      return;
+    }
+    let callback = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+      return _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].handlePositon(path, true);
+    }, isconst);
+    this.entity.polyline.positions = callback;
+    //维护坐标
+    let arr = [];
+    if (path[0] && path[0] instanceof _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Cartesian3) {
+      path.forEach(item => {
+        arr = arr.concat(_Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].cartesian2LonLat(item));
+      });
+    } else if (path instanceof _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Cartesian3) {
+      arr = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].cartesian2LonLat(path);
+    } else {
+      arr = path;
+    }
+    this._updateLineMaterials();
+    //维护本类属性
+    this.position = arr;
+  }
+
+  //改变线宽度
+  setWidth(width) {
+    if (!this.entity) {
+      return;
+    }
+    if (Number(width)) {
+      this.entity.polyline.width = width;
+      //维护本类属性
+      this.width = width;
+    }
+  }
+  //计算线长度
+  getWidth() {
+    let distance = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].distance([this.position[0], this.position[1]], [this.position[3], this.position[4]]);
+    return distance;
+  }
+  //改变外边框颜色
+  setOutlineColor(hex) {
+    if (!this.entity) {
+      return;
+    }
+    if (hex) {
+      let color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(hex);
+      if (this.style === "Outline") {
+        this.entity.polyline.material.outlineColor = color;
+      }
+      //维护本类属性
+      this.outlineColor = hex;
+    }
+  }
+
+  //改变外边框宽度
+  setOutlineWidth(width) {
+    if (!this.entity) {
+      return;
+    }
+    if (Number(width)) {
+      if (this.style === "Outline") {
+        this.entity.polyline.material.outlineWidth = width;
+      }
+      //维护本类属性
+      this.outlineWidth = width;
+    }
+  }
+
+  //改变线颜色
+  setColor(hex) {
+    if (!this.entity) {
+      return;
+    }
+    if (hex) {
+      let color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(hex);
+      if (this.style === "Normal") {
+        this.entity.polyline.material = color;
+      } else {
+        this.entity.polyline.material.color._value = color;
+      }
+      //维护本类属性
+      this.color = hex;
+    }
+  }
+
+  //改变线形
+  setStyle(style) {
+    if (!style || !this.entity) {
+      return;
+    }
+    //获取实体本来颜色
+    let color = this.entity.polyline.material.color._value;
+    let c = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].CesiumColor2hex(color);
+    this.entity.polyline.material = _Entity_Material_js__WEBPACK_IMPORTED_MODULE_4__["Material"].handleLineMaterial(style, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(c), this.outlineWidth, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.outlineColor));
+    //维护本类属性
+    this.style = style;
+  }
+
+  //线的隐藏与显示
+  setShow(ifshow = true) {
+    if (!this.entity) {
+      return;
+    }
+    this.entity.show = ifshow;
+    //维护本类属性
+    this.show = ifshow;
+  }
+
+  setAlpha(alpha, init = false) {
+    if (this.entity.polyline.positions) {
+      let position = this.entity.polyline.positions._value && this.entity.polyline.positions._value.length >= 2 ? this.entity.polyline.positions._value : null;
+      let callback = this.entity.polyline.positions ? this.entity.polyline.positions._callback : null;
+      if ((position || callback) && !init) {
+        this.setPosition(position ? position : callback(), false);
+      }
+      this.alpha = Math.min(Math.max(0.0001, alpha), 1);
+      this.opacity = Math.min(Math.max(0.0001, alpha), 1);
+      if (this.entity !== null) {
+        if (this.entity.polyline.material && this.entity.polyline.material.evenColor) {
+          this.entity.polyline.material.evenColor._value.alpha = this.alpha;
+          this.entity.polyline.material.oddColor._value.alpha = this.alpha;
         } else {
-            arr = path;
+          if (this.entity.polyline.color) {
+            this.entity.polyline.color._value.alpha = this.alpha;
+          } else {
+            this.entity.polyline.material.color._value.alpha = this.alpha;
+          }
         }
-        this._updateLineMaterials();
-        //维护本类属性
-        this.position = arr;
+      }
+      if ((position || callback) && !init) {
+        setTimeout(() => {
+          this.setPosition(position ? position : callback(), true);
+        }, 0);
+      }
     }
+  }
+  //平移,沿经度方向和纬度方向按照经纬度大小进行平移
+  translate(lng, lat) {
+    for (let i = 0; i <= this.position.length - 1; i += 3) {
+      this.position[i] = this.position[i] + Number(lng);
+      this.position[i + 1] = this.position[i + 1] + Number(lat);
+    }
+    this.setPosition(this.position, true);
+  }
+  //缩放
+  scale(scale, c) {
+    this._setScale(1 / this._scale, c);
+    this._setScale(scale, c);
+    this.setPosition(this.position, true);
+    this._scale = scale;
+  }
+  _setScale(scale, c) {
+    //计算几何图形中心点
+    let centerLng = 0,
+        centerLat = 0,
+        count = 0;
+    for (let i = 0; i <= this.position.length - 1; i += 3) {
+      centerLng += this.position[i];
+      centerLat += this.position[i + 1];
+      count++;
+    }
+    let center = c ? c : [centerLng / count, centerLat / count];
+    //为每个点求缩放后坐标
+    for (let i = 0; i <= this.position.length - 1; i += 3) {
+      //求原始距离
+      let distance = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].getBaseLength([center, [this.position[i], this.position[i + 1]]]);
+      let newPoint = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].getThirdPoint(center, [this.position[i], this.position[i + 1]], Math.PI, distance * (scale - 1), true);
+      this.position[i] = newPoint[0];
+      this.position[i + 1] = newPoint[1];
+    }
+  }
+  //旋转
+  rotate(angle, c) {
+    let centerLng = 0,
+        centerLat = 0,
+        count = 0;
+    for (let i = 0; i <= this.position.length - 1; i += 3) {
+      centerLng += this.position[i];
+      centerLat += this.position[i + 1];
+      count++;
+    }
+    let center = c ? c : [centerLng / count, centerLat / count];
+    //为每个点求缩放后坐标
+    for (let i = 0; i <= this.position.length - 1; i += 3) {
+      //求原始距离
+      let distance = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].distance(center, [this.position[i], this.position[i + 1]]);
+      //偏转角
+      let a = (180 - angle) / 2 * Math.PI / 180;
+      //长度
+      let length = 2 * Math.cos(a) * distance;
+      //旋转后坐标
+      let lastPoint = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].getThirdPoint(center, [this.position[i], this.position[i + 1]], a, length, true);
+      //距离弥合
+      let d = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].distance(lastPoint, center) - distance;
+      let finnalPoint = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].getThirdPoint(lastPoint, center, 0, distance + d, true);
+      this.position[i] = finnalPoint[0];
+      this.position[i + 1] = finnalPoint[1];
+    }
+    this.setPosition(this.position, true);
+  }
+  //从视图和cesium对象中删除
+  delete() {
+    if (!this.entity) {
+      return;
+    }
+    _Constants_js__WEBPACK_IMPORTED_MODULE_2__["Speed3D_viewer"].viewer.entities.remove(this.entity);
+    this.entity = null;
+  }
 
-    //改变线宽度
-    setWidth(width) {
-        if (!this.entity) {
-            return;
-        }
-        if (Number(width)) {
-            this.entity.polyline.width = width;
-            //维护本类属性
-            this.width = width;
-        }
+  //摧毁线
+  destroy() {
+    _Constants_js__WEBPACK_IMPORTED_MODULE_2__["Speed3D_viewer"].viewer.entities.remove(this.entity);
+    for (let key in this) {
+      delete this[key];
     }
-    //计算线长度
-    getWidth() {
-        let distance = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].distance([this.position[0], this.position[1]], [this.position[3], this.position[4]]);
-        return distance;
-    }
-    //改变外边框颜色
-    setOutlineColor(hex) {
-        if (!this.entity) {
-            return;
-        }
-        if (hex) {
-            let color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(hex);
-            if (this.style === 'Outline') {
-                this.entity.polyline.material.outlineColor = color;
-            }
-            //维护本类属性
-            this.outlineColor = hex;
-        }
-    }
+  }
 
-    //改变外边框宽度
-    setOutlineWidth(width) {
-        if (!this.entity) {
-            return;
-        }
-        if (Number(width)) {
-            if (this.style === 'Outline') {
-                this.entity.polyline.material.outlineWidth = width;
-            }
-            //维护本类属性
-            this.outlineWidth = width;
-        }
-    }
+  select() {
+    if (!this.entity) return;
+    this.isSelected = true;
+    // this.entity.polyline.material = SpeedColor.hex2CesiumColor('#FFFF00');
+    let color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor("#FFFF00");
+    let c = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].CesiumColor2hex(color);
+    this.entity.polyline.material = _Entity_Material_js__WEBPACK_IMPORTED_MODULE_4__["Material"].handleLineMaterial(this.style, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(c), this.outlineWidth, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.outlineColor));
+  }
 
-    //改变线颜色
-    setColor(hex) {
-        if (!this.entity) {
-            return;
-        }
-        if (hex) {
-            let color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(hex);
-            if (this.style === 'Normal') {
-                this.entity.polyline.material = color;
-            } else {
-                this.entity.polyline.material.color._value = color;
-            }
-            //维护本类属性
-            this.color = hex;
-        }
-    }
+  deselect() {
+    if (!this.entity) return;
+    this.isSelected = false;
+    let color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.color);
+    let c = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].CesiumColor2hex(color);
+    this.entity.polyline.material = _Entity_Material_js__WEBPACK_IMPORTED_MODULE_4__["Material"].handleLineMaterial(this.style, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(c), this.outlineWidth, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.outlineColor));
+  }
 
-    //改变线形
-    setStyle(style) {
-        if (!style || !this.entity) {
-            return;
-        }
-        //获取实体本来颜色
-        let color = this.entity.polyline.material.color._value;
-        let c = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].CesiumColor2hex(color);
-        this.entity.polyline.material = _Entity_Material_js__WEBPACK_IMPORTED_MODULE_4__["Material"].handleLineMaterial(style, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(c), this.outlineWidth, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.outlineColor));
-        //维护本类属性
-        this.style = style;
-    }
-
-    //线的隐藏与显示
-    setShow(ifshow = true) {
-        if (!this.entity) {
-            return;
-        }
-        this.entity.show = ifshow;
-        //维护本类属性
-        this.show = ifshow;
-    }
-
-    setAlpha(alpha, init = false) {
-        if (this.entity.polyline.positions) {
-            let position = this.entity.polyline.positions._value && this.entity.polyline.positions._value.length >= 2 ? this.entity.polyline.positions._value : null;
-            let callback = this.entity.polyline.positions ? this.entity.polyline.positions._callback : null;
-            if ((position || callback) && !init) {
-                this.setPosition(position ? position : callback(), false);
-            }
-            this.alpha = Math.min(Math.max(0.0001, alpha), 1);
-            this.opacity = Math.min(Math.max(0.0001, alpha), 1);
-            if (this.entity !== null) {
-                if (this.entity.polyline.material && this.entity.polyline.material.evenColor) {
-                    this.entity.polyline.material.evenColor._value.alpha = this.alpha;
-                    this.entity.polyline.material.oddColor._value.alpha = this.alpha;
-                } else {
-                    if (this.entity.polyline.color) {
-                        this.entity.polyline.color._value.alpha = this.alpha;
-                    } else {
-                        this.entity.polyline.material.color._value.alpha = this.alpha;
-                    }
-                }
-            }
-            if ((position || callback) && !init) {
-                setTimeout(() => {
-                    this.setPosition(position ? position : callback(), true);
-                }, 0);
-            }
-        }
-    }
-    //平移,沿经度方向和纬度方向按照经纬度大小进行平移
-    translate(lng, lat) {
-        for (let i = 0; i <= this.position.length - 1; i += 3) {
-            this.position[i] = this.position[i] + Number(lng);
-            this.position[i + 1] = this.position[i + 1] + Number(lat);
-        }
-        this.setPosition(this.position, true);
-    }
-    //缩放
-    scale(scale, c) {
-        this._setScale(1 / this._scale, c);
-        this._setScale(scale, c);
-        this.setPosition(this.position, true);
-        this._scale = scale;
-    }
-    _setScale(scale, c) {
-        //计算几何图形中心点
-        let centerLng = 0,
-            centerLat = 0,
-            count = 0;
-        for (let i = 0; i <= this.position.length - 1; i += 3) {
-            centerLng += this.position[i];
-            centerLat += this.position[i + 1];
-            count++;
-        }
-        let center = c ? c : [centerLng / count, centerLat / count];
-        //为每个点求缩放后坐标
-        for (let i = 0; i <= this.position.length - 1; i += 3) {
-            //求原始距离
-            let distance = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].getBaseLength([center, [this.position[i], this.position[i + 1]]]);
-            let newPoint = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].getThirdPoint(center, [this.position[i], this.position[i + 1]], Math.PI, distance * (scale - 1), true);
-            this.position[i] = newPoint[0];
-            this.position[i + 1] = newPoint[1];
-        }
-    }
-    //旋转
-    rotate(angle, c) {
-        let centerLng = 0,
-            centerLat = 0,
-            count = 0;
-        for (let i = 0; i <= this.position.length - 1; i += 3) {
-            centerLng += this.position[i];
-            centerLat += this.position[i + 1];
-            count++;
-        }
-        let center = c ? c : [centerLng / count, centerLat / count];
-        //为每个点求缩放后坐标
-        for (let i = 0; i <= this.position.length - 1; i += 3) {
-            //求原始距离
-            let distance = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].distance(center, [this.position[i], this.position[i + 1]]);
-            //偏转角
-            let a = (180 - angle) / 2 * Math.PI / 180;
-            //长度
-            let length = 2 * Math.cos(a) * distance;
-            //旋转后坐标
-            let lastPoint = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].getThirdPoint(center, [this.position[i], this.position[i + 1]], a, length, true);
-            //距离弥合
-            let d = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].distance(lastPoint, center) - distance;
-            let finnalPoint = _Math_Algorithm_Military_PlotUtil_js__WEBPACK_IMPORTED_MODULE_7__["PlotUtils"].getThirdPoint(lastPoint, center, 0, distance + d, true);
-            this.position[i] = finnalPoint[0];
-            this.position[i + 1] = finnalPoint[1];
-        }
-        this.setPosition(this.position, true);
-    }
-    //从视图和cesium对象中删除
-    delete() {
-        if (!this.entity) {
-            return;
-        }
-        _Constants_js__WEBPACK_IMPORTED_MODULE_2__["Speed3D_viewer"].viewer.entities.remove(this.entity);
-        this.entity = null;
-    }
-
-    //摧毁线
-    destroy() {
-        _Constants_js__WEBPACK_IMPORTED_MODULE_2__["Speed3D_viewer"].viewer.entities.remove(this.entity);
-        for (let key in this) {
-            delete this[key];
-        }
-    }
-
-    select() {
-        if (!this.entity) return;
-        this.isSelected = true;
-        // this.entity.polyline.material = SpeedColor.hex2CesiumColor('#FFFF00');
-        let color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor('#FFFF00');
-        let c = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].CesiumColor2hex(color);
-        this.entity.polyline.material = _Entity_Material_js__WEBPACK_IMPORTED_MODULE_4__["Material"].handleLineMaterial(this.style, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(c), this.outlineWidth, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.outlineColor));
-    }
-
-    deselect() {
-        if (!this.entity) return;
-        this.isSelected = false;
-        let color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.color);
-        let c = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].CesiumColor2hex(color);
-        this.entity.polyline.material = _Entity_Material_js__WEBPACK_IMPORTED_MODULE_4__["Material"].handleLineMaterial(this.style, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(c), this.outlineWidth, _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_3__["SpeedColor"].hex2CesiumColor(this.outlineColor));
-    }
-
-    //保存
-    save() {
-        return this.entity.name;
-    }
-
+  //保存
+  save() {
+    return this.entity.name;
+  }
 }
 
 
@@ -5240,7 +5249,6 @@ class Polygon extends _Entity_js__WEBPACK_IMPORTED_MODULE_0__["Entity"] {
                 hierarchy: {
                     positions: positions,
                     holes: arr
-                    // QS:holes?孔？
                 },
                 material: _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_2__["SpeedColor"].hex2CesiumColor(this.color),
                 // outline: false,
@@ -9281,21 +9289,20 @@ class Globe extends _Event_Event_js__WEBPACK_IMPORTED_MODULE_9__["Event"] {
                             }
                         }
                     };
- }
-                }
+                });
+
                 techniques.forEach(function (t) {
                     for (let attribute in t.attributes) {
                         let name = t.attributes[attribute];
                         t.attributes[attribute] = t.parameters[name];
                     };
-}
 
-                    for uniform in t.uniforms) {
+                    for (let uniform in t.uniforms) {
                         let name = t.uniforms[uniform];
                         t.uniforms[uniform] = t.parameters[name];
                     };
- }
-                }           }
+                });
+            }
         };
         try {
             Object.defineProperties(_Constants_js__WEBPACK_IMPORTED_MODULE_0__["dependence"].Cesium.Model.prototype, {
@@ -11946,7 +11953,8 @@ class EditPoint extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
             let pick = this.handler.getObject(movement);
             if (pick && pick.id === target.id) {
                 step = 1;
-                _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                this.beginEdit();
             }
         });
         this.handler.add('LEFT_UP', () => {
@@ -11954,7 +11962,8 @@ class EditPoint extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 target.setPosition(position1, true);
             }
             step = 0;
-            _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1
+            this.endEdit();
         });
         this.handler.add('MOUSE_MOVE', movement => {
             if (step === 1) {
@@ -11984,6 +11993,8 @@ class EditPoint extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Edit", function() { return Edit; });
 /* harmony import */ var _Event_Event_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(32);
+/* harmony import */ var _Constants__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
+
 
 
 class Edit extends _Event_Event_js__WEBPACK_IMPORTED_MODULE_0__["Event"] {
@@ -11998,6 +12009,21 @@ class Edit extends _Event_Event_js__WEBPACK_IMPORTED_MODULE_0__["Event"] {
 
     end() {}
 
+    beginEdit() {
+        if (_Constants__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.mode === _Constants__WEBPACK_IMPORTED_MODULE_1__["dependence"].Cesium.SceneMode.SCENE3D) {
+            _Constants__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+        } else {
+            _Constants__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableTranslate = 0;
+        }
+    }
+
+    endEdit() {
+        if (_Constants__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.mode === _Constants__WEBPACK_IMPORTED_MODULE_1__["dependence"].Cesium.SceneMode.SCENE3D) {
+            _Constants__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+        } else {
+            _Constants__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableTranslate = 1;
+        }
+    }
     saveState() {
         this.originalPosition = this.target.position;
     }
@@ -12130,7 +12156,8 @@ class EditEllipse extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                     let r = this.handler.checkIfHitGrab(pick, this.StaticGrabs);
                     let r1 = this.handler.checkIfHitGrab(pick, this.MiddleGrabs);
                     if (r && r.result) {
-                        _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        this.beginEdit();
                         pick.setScale(1.2);
                         index = r.index;
                         step = 1;
@@ -12138,7 +12165,8 @@ class EditEllipse extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 } else {
                     let r = this.handler.checkIfHitGrab(pick, this.StaticGrabs);
                     if (r && r.result) {
-                        _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        this.beginEdit();
                         pick.setScale(1.2);
                         index = r.index;
                         step = 1;
@@ -12163,7 +12191,8 @@ class EditEllipse extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                     pick.setScale(1.0);
                 }
                 step = 0;
-                _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+                // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1;
+                this.endEdit();
             } else {
                 console.log(target);
 
@@ -12171,8 +12200,9 @@ class EditEllipse extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 if (pick && pick.setScale) {
                     pick.setScale(1.0);
                 }
-                _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+                // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1;
                 // pick.setPosition(target.position)
+                this.endEdit();
                 step = 0;
                 console.log('cccccccccccccccccccccccc');
             }
@@ -12424,14 +12454,16 @@ class EditLine extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 let r = this.handler.checkIfHitGrab(pick, this.StaticGrabs);
                 let r1 = this.handler.checkIfHitGrab(pick, this.MiddleGrabs);
                 if (r && r.result) {
-                    _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                    // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                    this.beginEdit();
                     pick.setScale(1.2);
                     index = r.index;
                     step = 1;
                 }
                 //如果点击虚拟抓手，则进行分裂
                 else if (r1 && r1.result) {
-                        _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        this.beginEdit();
                         this.positions.splice(r1.index * 3 + 3, 0, pick.position[0], pick.position[1], pick.position[2]);
                         target.setPosition(this.positions);
                         //重新计算实体和虚拟抓手
@@ -12448,7 +12480,8 @@ class EditLine extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 pick.setScale(1.0);
             }
             step = 0;
-            _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            this.endEdit();
         });
         this.handler.add('MOUSE_MOVE', movement => {
             if (step === 1) {
@@ -12653,14 +12686,14 @@ class EditPolygon extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 let r = this.handler.checkIfHitGrab(pick, this.StaticGrabs);
                 let r1 = this.handler.checkIfHitGrab(pick, this.MiddleGrabs);
                 if (r && r.result) {
-                    _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                    this.beginEdit();
                     pick.setScale(1.2);
                     index = r.index;
                     step = 1;
                 }
                 //如果点击虚拟抓手，则进行分裂
                 else if (r1 && r1.result) {
-                        _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        this.beginEdit();
                         this.positions.splice(r1.index * 3 + 3, 0, pick.position[0], pick.position[1], pick.position[2]);
                         //重新计算实体和虚拟抓手
                         this._deleteMiddleGrab();
@@ -12676,7 +12709,8 @@ class EditPolygon extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 pick.setScale(1.0);
             }
             step = 0;
-            _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+
+            this.endEdit();
         });
         this.handler.add('MOUSE_MOVE', movement => {
             if (step === 1) {
@@ -12742,7 +12776,8 @@ class EditModel extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
             let pick = this.handler.getObject(movement);
             if (pick && pick.id === target.id) {
                 step = 1;
-                _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                this.beginEdit();
             }
         });
         this.handler.add('LEFT_UP', () => {
@@ -12750,7 +12785,8 @@ class EditModel extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 target.setPosition(position1, true);
             }
             step = 0;
-            _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1
+            this.endEdit();
         });
         this.handler.add('MOUSE_MOVE', movement => {
             if (step === 1) {
@@ -12801,7 +12837,8 @@ class EditCone extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
             let pick = this.handler.getObject(movement);
             if (pick && pick.id === target.id) {
                 step = 1;
-                _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                this.beginEdit();
             }
         });
         this.handler.add('LEFT_UP', () => {
@@ -12809,7 +12846,8 @@ class EditCone extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 target.setPosition(position1, true);
             }
             step = 0;
-            _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1
+            this.endEdit();
         });
         this.handler.add('MOUSE_MOVE', movement => {
             if (step === 1) {
@@ -12855,7 +12893,8 @@ class EditCylinder extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
             let pick = this.handler.getObject(movement);
             if (pick && pick.id === target.id) {
                 step = 1;
-                _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                this.beginEdit();
             }
         });
         this.handler.add('LEFT_UP', () => {
@@ -12863,7 +12902,8 @@ class EditCylinder extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 target.setPosition(position1, true);
             }
             step = 0;
-            _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1
+            this.endEdit();
         });
         this.handler.add('MOUSE_MOVE', movement => {
             if (step === 1) {
@@ -13024,14 +13064,16 @@ class EditSpacePolygon extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 let r = this.handler.checkIfHitGrab(pick, this.StaticGrabs);
                 let r1 = this.handler.checkIfHitGrab(pick, this.MiddleGrabs);
                 if (r && r.result) {
-                    _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                    // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                    this.beginEdit();
                     pick.setScale(1.2);
                     index = r.index;
                     step = 1;
                 }
                 //如果点击虚拟抓手，则进行分裂
                 else if (r1 && r1.result) {
-                        _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        this.endEdit();
                         this.positions.splice(r1.index * 3 + 3, 0, pick.position[0], pick.position[1], pick.position[2]);
                         //重新计算实体和虚拟抓手
                         this._deleteMiddleGrab();
@@ -13047,7 +13089,8 @@ class EditSpacePolygon extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 pick.setScale(1.0);
             }
             step = 0;
-            _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            this.endEdit();
         });
         this.handler.add('MOUSE_MOVE', movement => {
             if (movement.startPosition.x === movement.endPosition.x && movement.startPosition.y === movement.endPosition.y) {
@@ -13117,7 +13160,8 @@ class EditWords extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
             let pick = this.handler.getObject(movement);
             if (pick && pick.id === target.id) {
                 step = 1;
-                _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                this.beginEdit();
             }
         });
         this.handler.add('LEFT_UP', () => {
@@ -13125,7 +13169,8 @@ class EditWords extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                 target.setPosition(position1, true);
             }
             step = 0;
-            _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+            // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1
+            this.endEdit();
         });
         this.handler.add('MOUSE_MOVE', movement => {
             if (step === 1) {
@@ -14237,8 +14282,8 @@ class ProfileAnalysis extends _Function_js__WEBPACK_IMPORTED_MODULE_0__["Functio
         let element = document.getElementById(this.bindElment);
         if (element) {
             element.innerHTML = this.pendingMessage;;
- ;
-        }     this.handler.destroy();
+        }
+        this.handler.destroy();
         this.positions = [];
         if (this.supportLine !== null) {
             this.supportLine.destroy();
@@ -17081,22 +17126,13 @@ class Polygon {
 
     /**
      * 判定点是否在此多边形内
-     * @param {Point} otherPoint //?等于一个经纬度加高的对象
+     * @param {Point} otherPoint
      * @return {boolean}
      */
     contains(otherPoint) {
-        // 是否为顶点
         if (this.isVertix(otherPoint)) return true;
         let flag = false;
-        // 抽象多边形.3 -1 <3
         for (let i = 0, l = this.position.length, j = l - 1; i < l; j = i, i++) {
-            // （顶点纬度<参数的纬度 && 顶点上一点纬度>=参数的纬度 || 顶点纬度>=参数的纬度 && 顶点上一点纬度<参数的纬度）
-            //  line2  :   变量经度 = 顶点经度+（参数的纬度 - 顶点纬度） * （顶点上一点经度 - 顶点经度）/(顶点上一点的纬度 -顶点纬度)
-            //line3： （“变量经度” === 参数的经度）返回true
-            // 
-            //（“变量经度”> 参数的经度）flag = !flag;
-            //
-
             if (this.position[i].latitude < otherPoint.latitude && this.position[j].latitude >= otherPoint.latitude || this.position[i].latitude >= otherPoint.latitude && this.position[j].latitude < otherPoint.latitude) {
                 let longitude = this.position[i].longitude + (otherPoint.latitude - this.position[i].latitude) * (this.position[j].longitude - this.position[i].longitude) / (this.position[j].latitude - this.position[i].latitude);
 
@@ -17739,10 +17775,10 @@ __webpack_require__.r(__webpack_exports__);
 
 class BasicImageProviderLayer {
 
-    constructor(type, options = {}) {
+    constructor(type, options = {}, base = true) {
         this.viewer = _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer;
         this.visibale = false;
-        this.otherType = "";
+        this.otherType = type;
         this.baseType = type;
         this.otherMapBase = {
             BASIC: 0,
@@ -17753,20 +17789,61 @@ class BasicImageProviderLayer {
         this.totalCount = 0;
         this.otherCount = 0;
         this.baseCount = 0;
-        this.show(options);
+        this.baseLayers = [];
+        this.otherLayers = [];
+        this.show(options, base);
     }
 
     show(options, base = true) {
         this.removeOld(base);
         if (base) {
             if (this.viewer.imageryLayers.length && this.viewer.imageryLayers._layers[0].imageryProvider.credit && this.viewer.imageryLayers._layers[0].imageryProvider.credit.html === this.baseType) return;
-            _Map_js__WEBPACK_IMPORTED_MODULE_0__["Map"][this.baseType](options);
+            this.baseLayers.push(_Map_js__WEBPACK_IMPORTED_MODULE_0__["Map"][this.baseType](options));
             this.baseCount = 1;
         } else {
-            _Map_js__WEBPACK_IMPORTED_MODULE_0__["Map"][this.otherType](this.otherMapBase[this.otherType]);
+            if (this.otherMapBase[this.otherType]) {
+                this.otherLayers.push(_Map_js__WEBPACK_IMPORTED_MODULE_0__["Map"][this.otherType](this.otherMapBase[this.otherType]));
+            } else {
+                this.otherLayers.push(_Map_js__WEBPACK_IMPORTED_MODULE_0__["Map"][this.otherType](options));
+            }
             this.otherCount++;
         }
         this.totalCount = this.baseCount + this.otherCount;
+    }
+
+    removeAt(index, base = ture) {
+        let layer = undefined;
+        if (base) {
+            if (index < 0 || index > this.baseLayers.length - 1) {
+                return;
+            }
+            layer = this.baseLayers[index];
+        } else {
+            if (index < 0 || index > this.otherLayers.length - 1) {
+                return;
+            }
+            layer = this.otherLayers[index];
+        }
+
+        this.viewer.imageLayers.remove(layer, true);
+    }
+
+    removeAll(base = true) {
+        if (base) {
+            for (let i = this.baseCount - 1; i >= 0; i--) {
+                let a = this.baseLayers[i];
+                this.viewer.imageryLayers.remove(a, true);
+            }
+            this.baseCount = 0;
+        } else {
+            let tmp = 0;
+            for (let i = 0; i < this.otherLayers.length; i++) {
+                tmp = this.otherLayers[i];
+                this.viewer.imageryLayers.remove(tmp, true);
+            }
+            this.otherCount = 0;
+        }
+        this.totalCount = 0;
     }
 
     removeOld(base = true) {
@@ -17815,9 +17892,9 @@ class BasicImageProviderLayer {
      * @param {String} type
      * @param remove
      */
-    changeOtherType(type, remove = false) {
-        this.otherType = type.toLocaleUpperCase();
-        remove ? this.removeOld(false) : this.show({}, false);
+    changeOtherType(type, remove = false, config = {}) {
+        this.otherType = type;
+        remove ? this.removeOld(false) : this.show(config, false);
     }
 }
 
@@ -18388,7 +18465,7 @@ class ImageProviderLayer extends _BasicLayer_js__WEBPACK_IMPORTED_MODULE_1__["Ba
 
     init() {
         super.init();
-        this.createProvider(this.config);
+        this.createProvider();
     }
 
     show() {
@@ -18502,14 +18579,6 @@ class ImageProviderLayer extends _BasicLayer_js__WEBPACK_IMPORTED_MODULE_1__["Ba
 
     raise() {
         _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer.imageryLayers.raise(this.provider);
-    }
-
-    load() {
-        super.load();
-    }
-
-    save() {
-        super.save();
     }
     createTMSLayer(config) {
         return new _Constants_js__WEBPACK_IMPORTED_MODULE_0__["dependence"].Cesium.UrlTemplateImageryProvider({
@@ -20095,7 +20164,8 @@ class EditRectangle extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                     //如果点击到的是实体抓手，则进行放大和允许位移操作
                     let r = this.handler.checkIfHitGrab(pick, this.StaticGrabs);
                     if (r && r.result) {
-                        _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 0;
+                        this.beginEdit();
                         pick.setScale(1.2);
                         index = r.index;
                         step = 1;
@@ -20115,7 +20185,8 @@ class EditRectangle extends _Edit_js__WEBPACK_IMPORTED_MODULE_2__["Edit"] {
                     pick.setScale(1.0);
                 }
                 step = 0;
-                _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.screenSpaceCameraController.enableRotate = 1;
+                // Speed3D_viewer.viewer.scene.screenSpaceCameraController.enableRotate = 1;
+                this.endEdit();
             }
         });
         this.handler.add('MOUSE_MOVE', movement => {
@@ -22142,14 +22213,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "TileServiceWithTime", function() { return TileServiceWithTime; });
 /* harmony import */ var _Constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2);
 /* harmony import */ var _Core_Entity_Clock_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(96);
-;;
-
+;
 
 
 
 //多时相处理
 
-classServiceWithTime {
+class TileServiceWithTime {
     constructor(config) {
         this.viewer = _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer;
         this.clock = new _Core_Entity_Clock_js__WEBPACK_IMPORTED_MODULE_1__["Clock"]();
@@ -23186,10 +23256,11 @@ class MouseHandler extends _Event_Event_js__WEBPACK_IMPORTED_MODULE_0__["Event"]
                 return true;
             }
         });
+        console.log('ifsupport : ', ifsupport);
         if (!ifsupport) {
             throw new Error(`不支持${eventType}事件或事件名没写对，支持的事件为：${this.eventType.toString()}`);
         }
-        return true;
+        return ifsupport;
     }
 
     //功能函数，直接获取点击坐标并转为经纬度
@@ -23219,6 +23290,7 @@ class MouseHandler extends _Event_Event_js__WEBPACK_IMPORTED_MODULE_0__["Event"]
         let position1;
         if (this.viewer.scene.mode === 2) {
             position1 = this.viewer.camera.pickEllipsoid(position);
+            console.log('Speed3D::MouseHandlers =================================================> getCoordinates ', JSON.stringify(position1));
         } else {
             let ray = this.viewer.scene.camera.getPickRay(position);
             if (ray) position1 = this.viewer.scene.globe.pick(ray, this.viewer.scene);
@@ -23274,6 +23346,7 @@ class MouseHandler extends _Event_Event_js__WEBPACK_IMPORTED_MODULE_0__["Event"]
     bindMouseEvent(eventType, fn, scope) {
         if (this._actionCheck(eventType)) {
             //防止重复注册，以最后一次注册为准
+            console.log('bindMouseEvent!');
             let cesiumEvent = this._getCesiumMouseEvent(eventType);
             this.handle.removeInputAction(cesiumEvent);
             let scopedFn = fn.bind(scope || this);
@@ -24850,151 +24923,147 @@ __webpack_require__.r(__webpack_exports__);
 const Cesium = _Constants_js__WEBPACK_IMPORTED_MODULE_0__["dependence"].Cesium;
 
 class MeasureSpaceDistance extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_1__["MouseHandler"] {
-    constructor(options) {
-        super(options);
+	constructor(options) {
+		super(options);
 
-        this.viewer = _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer;
-        // this.handler = new MouseHandler();
-        // this.config = options;
+		this.viewer = _Constants_js__WEBPACK_IMPORTED_MODULE_0__["Speed3D_viewer"].viewer;
+		// this.handler = new MouseHandler();
+		// this.config = options;
 
-        this.config.continuity = true;
+		this.config.continuity = true;
 
-        this.entities = [];
+		this.entities = [];
 
-        this.polyline = { positions: [], distanceH: 0, height: 0, distanceS: 0 };
-        this.label = { position: '', text: '' };
+		this.polyline = { positions: [], distanceH: 0, height: 0, distanceS: 0 };
+		this.label = { position: '', text: '' };
 
-        this.entityLine = undefined;
-        this.entityLabel = undefined;
+		this.entityLine = undefined;
+		this.entityLabel = undefined;
 
-        this.message = 'this is test';
+		this.message = 'this is test';
 
-        this.isStart = false;
+		this.isStart = false;
 
-        this.startPoint = undefined;
+		this.startPoint = undefined;
 
-        let that = this;
+		let that = this;
 
-        this.positions = new Cesium.CallbackProperty(function () {
-            return that.polyline.positions;
-        }, false);
+		this.positions = new Cesium.CallbackProperty(function () {
+			return that.polyline.positions;
+		}, false);
 
-        this.labelPostion = new Cesium.CallbackProperty(function () {
-            return that.label.position;
-        }, false);
-        this.labelText = new Cesium.CallbackProperty(function () {
-            return that.label.text;
-        }, false);
-    }
+		this.labelPostion = new Cesium.CallbackProperty(function () {
+			return that.label.position;
+		}, false);
+		this.labelText = new Cesium.CallbackProperty(function () {
+			return that.label.text;
+		}, false);
+	}
 
-    reset() {
-        this.isStart = false;
-    }
-    start() {
-        this.end();
+	reset() {
+		this.isStart = false;
+	}
+	start() {
+		this.end();
 
-        this.viewer.scene.globe.depthTestAgainstTerrain = true; //开启地形深度检测，实现Entity能够被遮挡
-        this.bindMouseEvent('LEFT_CLICK', this.LEFT_CLICK.bind(this));
-        this.bindMouseEvent('MOUSE_MOVE', this.MOUSE_MOVE.bind(this));
-        this.isStart = true;
-    }
+		this.viewer.scene.globe.depthTestAgainstTerrain = true; //开启地形深度检测，实现Entity能够被遮挡
+		this.bindMouseEvent('LEFT_CLICK', this.LEFT_CLICK.bind(this));
+		this.bindMouseEvent('MOUSE_MOVE', this.MOUSE_MOVE.bind(this));
+		this.isStart = true;
+	}
 
-    end() {
-        this.isStart = false;
-        this.startPoint = undefined;
-        // this.endPoint = undefined;
+	end() {
+		this.isStart = false;
+		this.startPoint = undefined;
+		// this.endPoint = undefined;
 
-        this.unbindMouseEvent('LEFT_CLICK');
-        this.unbindMouseEvent('MOUSE_MOVE');
+		this.unbindMouseEvent('LEFT_CLICK');
+		this.unbindMouseEvent('MOUSE_MOVE');
 
-        this.viewer.entities.remove(this.entityLabel);
-        this.viewer.entities.remove(this.entityLine);
-        this.entityLabel = undefined;
-        this.entityLine = undefined;
-        this.polyline = { positions: [], distanceH: 0, height: 0, distanceS: 0 };
-        this.viewer.scene.globe.depthTestAgainstTerrain = false; //关闭遮挡
-    }
+		this.viewer.entities.remove(this.entityLabel);
+		this.viewer.entities.remove(this.entityLine);
+		this.entityLabel = undefined;
+		this.entityLine = undefined;
+		this.polyline = { positions: [], distanceH: 0, height: 0, distanceS: 0 };
+	}
 
-    LEFT_CLICK(e) {
-        if (!this.isStart) {
-            return;
-        }
+	LEFT_CLICK(e) {
+		if (!this.isStart) {
+			return;
+		}
 
-        const { viewer } = this;
-        // let position = this.handler.getCoordinates(e,false);
-        let position = viewer.scene.pickPosition(e.position);
+		const { viewer } = this;
+		// let position = this.handler.getCoordinates(e,false);
+		let position = viewer.scene.pickPosition(e.position);
 
-        if (this.startPoint === undefined) {
-            this.polyline.positions.push(position.clone());
-            this.startPoint = position.clone();
-            // this.polyline.positions = this.polyline.positions.concat(position);
-            this.config.position = this.polyline.positions;
-            this.entityLine = this.viewer.entities.add({
-                polyline: {
-                    positions: this.positions,
-                    // material:Cesium.Color.RED,
-                    // outLine:true,
-                    material: Cesium.Color.fromCssColorString(this.config.color || '#FF8C37'),
-                    width: 5,
-                    zIndex: 500,
-                    loop: true
-                }
-            });
-            // this.label.position = Cesium.Cartesian3.add(this.startPoint.clone(),new Cesium.Cartesian3(0,0,10),{});
-            this.label.position = this.startPoint.clone();
-            this.label.text = '0米';
-            this.entityLabel = this.viewer.entities.add({
-                position: this.labelPostion,
-                label: {
-                    text: this.labelText,
-                    font: '100 20px SimSun',
-                    fillColor: Cesium.Color.fromCssColorString('#333333'),
-                    backgroundColor: Cesium.Color.fromCssColorString('#FFFFFF').withAlpha(0.5),
-                    outlineColor: Cesium.Color.fromCssColorString('#333333'),
-                    outlineWidth: 2,
-                    showBackground: true,
-                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                    zIndex: 100,
-                    eyeOffset: new Cesium.Cartesian3(0, 0.5, 0),
-                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                    pixelOffset: new Cesium.Cartesian2(20, -20),
-                    heightReference: Cesium.HeightReference.NONE
+		if (this.startPoint === undefined) {
+			this.polyline.positions.push(position.clone());
+			this.startPoint = position.clone();
+			// this.polyline.positions = this.polyline.positions.concat(position);
+			this.config.position = this.polyline.positions;
+			this.entityLine = this.viewer.entities.add({
+				polyline: {
+					positions: this.positions,
+					material: Cesium.Color.fromCssColorString(this.config.color || '#FF8C37'),
+					width: 5,
+					depthFailMaterial: Cesium.Color.fromCssColorString(this.config.color || '#FF8C37')
+				}
+			});
+			// this.label.position = Cesium.Cartesian3.add(this.startPoint.clone(),new Cesium.Cartesian3(0,0,10),{});
+			this.label.position = this.startPoint.clone();
+			this.label.text = '0米';
+			this.entityLabel = this.viewer.entities.add({
+				position: this.labelPostion,
+				label: {
+					text: this.labelText,
+					font: '20px SimSun',
+					fillColor: Cesium.Color.fromCssColorString('#333333'),
+					backgroundColor: Cesium.Color.fromCssColorString('#FFFFFF').withAlpha(0.5),
+					outlineColor: Cesium.Color.fromCssColorString('#333333'),
+					outlineWidth: 2,
+					showBackground: true,
+					style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+					zIndex: 100,
+					eyeOffset: new Cesium.Cartesian3(0, 0.5, 0),
+					verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+					pixelOffset: new Cesium.Cartesian2(20, -20),
+					heightReference: Cesium.HeightReference.NONE
+				}
+			});
+		} else {
+			// this.currentEntity.setPosition(this.polyline.positions,true);
+			// this.startPoint = undefined;
+			this.isStart = false;
+			this.viewer.scene.globe.depthTestAgainstTerrain = false; //关闭遮挡
+		}
+	}
 
-                }
-            });
-        } else {
-            // this.currentEntity.setPosition(this.polyline.positions,true);
-            // this.startPoint = undefined;
-            this.isStart = false;
-        }
-    }
+	MOUSE_MOVE(e) {
+		// console.log(mouse_event);
+		if (!this.isStart || this.startPoint === undefined) {
+			return;
+		}
+		let { viewer, polyline } = this;
 
-    MOUSE_MOVE(e) {
-        // console.log(mouse_event);
-        if (!this.isStart || this.startPoint === undefined) {
-            return;
-        }
-        let { viewer, polyline } = this;
+		// let p = polyline.positions;
+		// let tempGeoPoint = this.handler.getCoordinates(e);
+		// let endPoint = this.handler.getCoordinates(e,false);
+		let endPoint = viewer.scene.pickPosition(e.endPosition);
 
-        // let p = polyline.positions;
-        // let tempGeoPoint = this.handler.getCoordinates(e);
-        // let endPoint = this.handler.getCoordinates(e,false);
-        let endPoint = viewer.scene.pickPosition(e.endPosition);
+		if (polyline.positions.length !== 1) {
+			polyline.positions.pop();
+			// labels.pop()
+		}
+		polyline.positions.push(endPoint.clone());
+		polyline.distanceS = Cesium.Cartesian3.distance(this.startPoint, endPoint);
 
-        if (polyline.positions.length !== 1) {
-            polyline.positions.pop();
-            // labels.pop()
-        }
-        polyline.positions.push(endPoint.clone());
-        polyline.distanceS = Cesium.Cartesian3.distance(this.startPoint, endPoint);
+		let labelPositonS = {};
+		Cesium.Cartesian3.midpoint(this.startPoint, endPoint, labelPositonS);
 
-        let labelPositonS = {};
-        Cesium.Cartesian3.midpoint(this.startPoint, endPoint, labelPositonS);
-
-        let labelTextS = polyline.distanceS > 1000 ? (polyline.distanceS / 1000).toFixed(2) + 'km' : polyline.distanceS.toFixed(2) + 'm';
-        this.label.position = labelPositonS;
-        this.label.text = labelTextS;
-    }
+		let labelTextS = polyline.distanceS > 1000 ? (polyline.distanceS / 1000).toFixed(2) + 'km' : polyline.distanceS.toFixed(2) + 'm';
+		this.label.position = labelPositonS;
+		this.label.text = labelTextS;
+	}
 }
 
 
@@ -25006,68 +25075,635 @@ class MeasureSpaceDistance extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_1__
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MeasureHeight", function() { return MeasureHeight; });
-/* harmony import */ var _Entity_Tip_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(50);
+/* harmony import */ var _Entity__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(175);
 /* harmony import */ var _DrawTools_Point_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(158);
 /* harmony import */ var _MouseHandler_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(156);
+/* harmony import */ var _Constants_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(2);
+/* harmony import */ var _DrawTools_Ellipse_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(165);
+/* harmony import */ var _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(8);
+/**
+ * @mender ZXW
+ */
 
 
 
 
-//高度量算
+
+
+const { Cesium } = _Constants_js__WEBPACK_IMPORTED_MODULE_3__["dependence"];
+/**
+ * @class  高度测量
+ */
 class MeasureHeight extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_2__["MouseHandler"] {
+	/**
+  *
+  * @param {Boolean} config.continuity 是否连续标注
+  *
+  *
+  */
+	constructor(config = {}) {
+		super(config);
+		this.drawPoint = new _DrawTools_Point_js__WEBPACK_IMPORTED_MODULE_1__["DrawPoint"]({ continuity: true });
+		this.container = [];
+		this.positions = [];
+		// 标注回调
+		this.drawCallback = event => {
+			let point = event.entity;
+			if (point) {
+				let p = [point.position[0], point.position[1], point.position[2]];
+				this.positions.push(p);
+				this.container.push(point);
+				if (this.positions.length === 2) {
+					let t = Math.abs(this.positions[0][2] - this.positions[1][2]);
+					let linePositions = [],
+					    ellipsePositions = [],
+					    wordPositions = [];
+					if (this.positions[0][2] < this.positions[1][2]) {
+						linePositions = [...this.positions[0], this.positions[0][0], this.positions[0][1], this.positions[1][2]];
+						ellipsePositions = [this.positions[0][0], this.positions[0][1], this.positions[1][2]];
+						wordPositions = [this.positions[0][0], this.positions[0][1], this.positions[1][2]];
+					} else {
+						linePositions = [...this.positions[1], this.positions[1][0], this.positions[1][1], this.positions[0][2]];
+						ellipsePositions = [this.positions[1][0], this.positions[1][1], this.positions[0][2]];
+						wordPositions = [this.positions[1][0], this.positions[1][1], this.positions[0][2]];
+					}
+					const textLabel = new _Entity__WEBPACK_IMPORTED_MODULE_0__["Tip"]({
+						position: wordPositions,
+						text: `高程差: ${t.toFixed(2)} 米`,
+						//字体，Arial Times New Roman 宋体 黑体 MicroSoft YaHei
+						font: 'MicroSoft YaHei',
+						orizontalOrigin: Cesium.HorizontalOrigin.CENTER, // default
+						verticalOrigin: Cesium.VerticalOrigin.BOTTOM // default: CENTER
+					});
+					const self = this;
+					let radius = _DrawTools_Ellipse_js__WEBPACK_IMPORTED_MODULE_4__["DrawEllipse"].getDistance(_Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].handlePositon(self.positions[0]), _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_5__["Coordinate"].handlePositon(self.positions[1]));
+					const verticalLine = new _Entity__WEBPACK_IMPORTED_MODULE_0__["Line"]({
+						position: linePositions
+					});
 
-    constructor(config = {}) {
-        super(config);
-        this.config.continuity = true;
-        this.container = [];
-        this.drawPoint = new _DrawTools_Point_js__WEBPACK_IMPORTED_MODULE_1__["DrawPoint"](this.config);
-        this.positions = [];
-        this.callback = event => {
-            let point = event.entity;
-            if (point) {
-                let p = [point.position[0], point.position[1], point.position[2]];
-                this.positions.push(p);
-                this.container.push(point);
+					const circle = this.$viewer.entities.add({
+						position: ellipsePositions,
+						ellipse: {
+							material: this.$Cesium.Color.WHITE.withAlpha(0.3),
+							show: false,
+							semiMinorAxis: radius,
+							semiMajorAxis: radius
+						}
+					});
+					textLabel.setWordBackgroundColorAlpha(0.5);[textLabel, verticalLine, circle].forEach(t => {
+						this.container.push(t);
+					});
+					this.positions = [];
+				}
+			}
+		};
+	}
+	start() {
+		this.drawPoint.off('getEntity', this.drawCallback);
+		this.drawPoint.on('getEntity', this.drawCallback);
+		this.drawPoint.start();
+	}
 
-                if (this.positions.length === 2) {
-                    let sideheight = this.positions[0][2] > this.positions[1][2] ? 'left' : this.positions[0][2] < this.positions[1][2] ? 'right' : 'equal';
-                    let t = Math.abs(this.positions[0][2] - this.positions[1][2]);
-                    let word = new _Entity_Tip_js__WEBPACK_IMPORTED_MODULE_0__["Tip"]({
-                        position: [(this.positions[0][0] + this.positions[1][0]) / 2, (this.positions[0][1] + this.positions[1][1]) / 2, (this.positions[0][2] + this.positions[1][2]) / 2],
-                        text: (sideheight === 'left' ? '高点_' : sideheight === 'right' ? '低点_' : '等高_') + '高程差:' + t.toFixed(2) + '米' + (sideheight === 'left' ? '_低点' : sideheight === 'right' ? '_高点' : '_等高'),
-                        //字号
-                        pix: 40,
-                        //字体，Arial Times New Roman 宋体 黑体 MicroSoft YaHei
-                        font: 'MicroSoft YaHei'
-                    });
-                    word.setWordBackgroundColorAlpha(0.5);
-                    // this.container.push(point)
-                    this.container.push(word);
-                    this.positions = [];
-                }
-            }
-        };
-    }
-
-    start() {
-        this.drawPoint.off('getEntity', this.callback);
-        this.drawPoint.on('getEntity', this.callback);
-        this.drawPoint.start();
-    }
-
-    end() {
-        this.drawPoint.off('getEntity', this.callback);
-        this.drawPoint.endEvent();
-        this.fire('HeightMeasure', { entities: this.container });
-        this.container = [];
-        this.positions = [];
-    }
+	end() {
+		this.drawPoint.off('getEntity', this.drawCallback);
+		this.drawPoint.endEvent();
+		this.fire('HeightMeasure', { entities: this.container });
+		this.container = [];
+		this.positions = [];
+	}
 }
 
 
 
 /***/ }),
 /* 175 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Rectangle_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(46);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Rectangle", function() { return _Rectangle_js__WEBPACK_IMPORTED_MODULE_0__["Rectangle"]; });
+
+/* harmony import */ var _Shadow_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(47);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Shadow", function() { return _Shadow_js__WEBPACK_IMPORTED_MODULE_1__["Shadow"]; });
+
+/* harmony import */ var _SpacePolygon_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(49);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "SpacePolygon", function() { return _SpacePolygon_js__WEBPACK_IMPORTED_MODULE_2__["SpacePolygon"]; });
+
+/* harmony import */ var _words_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(48);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Words", function() { return _words_js__WEBPACK_IMPORTED_MODULE_3__["Words"]; });
+
+/* harmony import */ var _Tip_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(50);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Tip", function() { return _Tip_js__WEBPACK_IMPORTED_MODULE_4__["Tip"]; });
+
+/* harmony import */ var _Billboard_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(4);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Billboard", function() { return _Billboard_js__WEBPACK_IMPORTED_MODULE_5__["Billboard"]; });
+
+/* harmony import */ var _Cylinder_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(18);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Cylinder", function() { return _Cylinder_js__WEBPACK_IMPORTED_MODULE_6__["Cylinder"]; });
+
+/* harmony import */ var _Ellipse_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(20);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Ellipse", function() { return _Ellipse_js__WEBPACK_IMPORTED_MODULE_7__["Ellipse"]; });
+
+/* harmony import */ var _Entity_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(5);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Entity", function() { return _Entity_js__WEBPACK_IMPORTED_MODULE_8__["Entity"]; });
+
+/* harmony import */ var _Frustum_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(22);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Frustum", function() { return _Frustum_js__WEBPACK_IMPORTED_MODULE_9__["Frustum"]; });
+
+/* harmony import */ var _GeoVideo_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(24);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "GeoVideo", function() { return _GeoVideo_js__WEBPACK_IMPORTED_MODULE_10__["GeoVideo"]; });
+
+/* harmony import */ var _Line_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(25);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Line", function() { return _Line_js__WEBPACK_IMPORTED_MODULE_11__["Line"]; });
+
+/* harmony import */ var _Material_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(19);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Material", function() { return _Material_js__WEBPACK_IMPORTED_MODULE_12__["Material"]; });
+
+/* harmony import */ var _Circle_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(176);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Circle", function() { return _Circle_js__WEBPACK_IMPORTED_MODULE_13__["Circle"]; });
+
+/* harmony import */ var _Model3D_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(27);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Model3D", function() { return _Model3D_js__WEBPACK_IMPORTED_MODULE_14__["Model3D"]; });
+
+/* harmony import */ var _Picture_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(28);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Picture", function() { return _Picture_js__WEBPACK_IMPORTED_MODULE_15__["Picture"]; });
+
+/* harmony import */ var _Polygon_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(29);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Polygon", function() { return _Polygon_js__WEBPACK_IMPORTED_MODULE_16__["Polygon"]; });
+
+/* harmony import */ var _Military_No1_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(30);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No1", function() { return _Military_No1_js__WEBPACK_IMPORTED_MODULE_17__["No1"]; });
+
+/* harmony import */ var _Military_No4_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(35);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No4", function() { return _Military_No4_js__WEBPACK_IMPORTED_MODULE_18__["No4"]; });
+
+/* harmony import */ var _Military_No5_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(36);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No5", function() { return _Military_No5_js__WEBPACK_IMPORTED_MODULE_19__["No5"]; });
+
+/* harmony import */ var _Military_No6_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(37);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No6", function() { return _Military_No6_js__WEBPACK_IMPORTED_MODULE_20__["No6"]; });
+
+/* harmony import */ var _Military_No7_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(38);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No7", function() { return _Military_No7_js__WEBPACK_IMPORTED_MODULE_21__["No7"]; });
+
+/* harmony import */ var _Military_No8_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(39);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No8", function() { return _Military_No8_js__WEBPACK_IMPORTED_MODULE_22__["No8"]; });
+
+/* harmony import */ var _Military_No9_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(40);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No9", function() { return _Military_No9_js__WEBPACK_IMPORTED_MODULE_23__["No9"]; });
+
+/* harmony import */ var _Military_No10_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(41);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No10", function() { return _Military_No10_js__WEBPACK_IMPORTED_MODULE_24__["No10"]; });
+
+/* harmony import */ var _Military_No11_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(42);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No11", function() { return _Military_No11_js__WEBPACK_IMPORTED_MODULE_25__["No11"]; });
+
+/* harmony import */ var _Military_No12_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(43);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No12", function() { return _Military_No12_js__WEBPACK_IMPORTED_MODULE_26__["No12"]; });
+
+/* harmony import */ var _Military_No13_js__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(44);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No13", function() { return _Military_No13_js__WEBPACK_IMPORTED_MODULE_27__["No13"]; });
+
+/* harmony import */ var _Military_No14_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(45);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "No14", function() { return _Military_No14_js__WEBPACK_IMPORTED_MODULE_28__["No14"]; });
+
+/* harmony import */ var _Cone_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(60);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Cone", function() { return _Cone_js__WEBPACK_IMPORTED_MODULE_29__["Cone"]; });
+
+/* harmony import */ var _Clock_js__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(96);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Clock", function() { return _Clock_js__WEBPACK_IMPORTED_MODULE_30__["Clock"]; });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***/ }),
+/* 176 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Circle", function() { return Circle; });
+/* harmony import */ var _turf_turf__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(21);
+/* harmony import */ var _turf_turf__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_turf_turf__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _Entity_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(5);
+/* harmony import */ var _Constants_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2);
+/* harmony import */ var _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(8);
+/* harmony import */ var _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(17);
+/* harmony import */ var _Material_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(19);
+/**
+ * @Author DY
+ * @refactor DY
+ */
+
+
+
+
+
+
+
+
+
+function cartesian2lonlat(cartesian) {
+  let ellipsoid = _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Ellipsoid.WGS84;
+  let cartographic = ellipsoid.cartesianToCartographic(cartesian);
+  let longitudeString = _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Math.toDegrees(cartographic.longitude);
+  let latitudeString = _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Math.toDegrees(cartographic.latitude);
+  return [longitudeString, latitudeString];
+}
+
+function cartesian2turfPoint(cartesian) {
+  let lonlat = cartesian2lonlat(cartesian);
+  return _turf_turf__WEBPACK_IMPORTED_MODULE_0__["point"](lonlat);
+}
+function lonlat2Cartesian(lonlat, height = 0) {
+  return _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Cartesian3.fromDegrees(lonlat[0], lonlat[1], height, _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Ellipsoid.WGS84);
+}
+
+function getOutlinePosition(position, major, minor, rotation = 0) {
+  let outlinePos = [];
+  let center = cartesian2turfPoint(position);
+  if (major === minor) {
+    // 2个控制点时，ellipse退化为circle
+    outlinePos = _turf_turf__WEBPACK_IMPORTED_MODULE_0__["circle"](center, major, { units: "kilometers" });
+  } else {
+    outlinePos = _turf_turf__WEBPACK_IMPORTED_MODULE_0__["ellipse"](center, major, minor, { units: "kilometers" });
+  }
+  return _turf_turf__WEBPACK_IMPORTED_MODULE_0__["getCoords"](outlinePos)[0].map(p => lonlat2Cartesian(p));
+}
+
+/*
+    for(let i = -180.0; i <= 180; i+=0.5 ) {
+        let x=major*Math.cos(dependence.Cesium.Math.toRadians(i))+position.x;
+        let y=minor*Math.sin(dependence.Cesium.Math.toRadians(i))+position.y;
+        console.log('calculate outline positions of ellipse ==========================> ',`major : ${major} , minor : ${minor}`);
+/!*
+        let tx=x;
+        let ty=y;
+        x=tx*Math.cos(dependence.Cesium.Math.toRadians(rotation))-ty*Math.sin(dependence.Cesium.Math.toRadians(rotation))+position.x;  /!*坐标旋转*!/
+        y=position.y-(ty*Math.cos(dependence.Cesium.Math.toRadians(rotation))+tx*Math.sin(dependence.Cesium.Math.toRadians(rotation)));
+*!/
+
+        outlinePos.push(new dependence.Cesium.Cartesian3(x, y, position.z));
+    }
+*/
+
+// console.log('calculate outline positions of ellipse ==========================> ',JSON.stringify(outlinePos,'',4));
+
+class Circle extends _Entity_js__WEBPACK_IMPORTED_MODULE_1__["Entity"] {
+  constructor(config = {}, needInit = true) {
+    super(config);
+    this.material = undefined;
+    this.entity = null;
+    this.style = config.style ? config.style : "Normal";
+    this.color = config.color ? config.color : "#ffffff";
+    // fill 的不透明度
+    if (config.ellipseAlpha !== null && config.ellipseAlpha !== undefined) {
+      this.ellipseAlpha = Math.min(Math.max(0.0001, config.ellipseAlpha), 1);
+      this.ellipseOpacity = this.ellipseAlpha;
+    } else if (config.ellipseOpacity !== null && config.ellipseOpacity !== undefined) {
+      this.ellipseOpacity = Math.min(Math.max(0.0001, config.ellipseOpacity), 1);
+      this.ellipseAlpha = this.ellipseOpacity;
+    } else {
+      this.ellipseOpacity = 1;
+      this.ellipseAlpha = 1;
+    }
+    // strock 的不透明度
+    if (config.ellipseOutlineAlpha !== null && config.ellipseOutlineAlpha !== undefined) {
+      this.ellipseOutlineAlpha = Math.min(Math.max(0.0001, config.ellipseOutlineAlpha), 1);
+      this.ellipseOutlineOpacity = this.ellipseOutlineAlpha;
+    } else if (config.ellipseOutlineOpacity !== null && config.ellipseOutlineOpacity !== undefined) {
+      this.ellipseOutlineOpacity = Math.min(Math.max(0.0001, config.ellipseOutlineOpacity), 1);
+      this.ellipseOutlineAlpha = this.ellipseOutlineOpacity;
+    } else {
+      this.ellipseOutlineOpacity = 1;
+      this.ellipseOutlineAlpha = 1;
+    }
+    this.evenColor = config.evenColor ? config.evenColor : "#ffffff";
+    this.oddColor = config.oddColor ? config.oddColor : "#ffffff";
+    this.show = config.show !== undefined ? config.show : true;
+    this.position = config.position;
+    // 画圆时设置radius   画做椭圆设置 semiMinorAxis、semiMajorAxis
+    this.radius = config.radius ? config.radius : undefined;
+    this.semiMinorAxis = this.radius ? this.radius : config.semiMinorAxis;
+    this.semiMajorAxis = this.radius ? this.radius : config.semiMajorAxis;
+    this.type = config.type ? config.type : "ellipse";
+    // 强制把椭圆变成圆
+    if (this.semiMinorAxis > this.semiMajorAxis) {
+      this.semiMajorAxis = config.semiMinorAxis;
+      this.semiMinorAxis = config.semiMajorAxis;
+    }
+    this.outline = config.outline === false ? config.outline : true;
+    this.outlineColor = config.outlineColor ? config.outlineColor : "#ffaaff";
+    this.outlineWidth = config.outlineWidth ? Math.max(config.outlineWidth, 0) : 1.0;
+    this.rotation = config.rotation ? config.rotation : 0.0;
+    this.height = config.height ? Math.max(config.height, 0) : 0;
+    this.extrudedHeight = config.extrudedHeight ? Math.max(config.extrudedHeight, 0) : undefined;
+    if (needInit === true) {
+      this.setMaterial(config);
+      this.setShow(this.show);
+      this.setEllipseAlpha(this.ellipseAlpha);
+      this.setEllipseOutlineAlpha(this.ellipseOutlineAlpha);
+    }
+    if (config instanceof _Entity_js__WEBPACK_IMPORTED_MODULE_1__["Entity"] === false) this.attr = _Entity_js__WEBPACK_IMPORTED_MODULE_1__["Entity"].checkInput(config, this);
+  }
+
+  setEllipseOutlineOpacity(opacity) {
+    this.setEllipseOutlineAlpha(opacity);
+  }
+
+  setEllipseOutlineAlpha(alpha) {
+    this.ellipseOutlineAlpha = Math.min(Math.max(0.0001, alpha), 1);
+    this.ellipseOutlineOpacity = this.ellipseOutlineAlpha;
+    if (this.entity !== null) {
+      if (this.outline === true && this.entity.polyline.outlineColor) this.entity.polyline.outlineColor._value.alpha = this.ellipseOutlineAlpha;
+    }
+  }
+
+  setEllipseOpacity(opacity) {
+    this.setEllipseAlpha(opacity);
+  }
+
+  setEllipseAlpha(alpha) {
+    this.ellipseAlpha = Math.min(Math.max(0.0001, alpha), 1);
+    this.ellipseOpacity = this.ellipseAlpha;
+    if (this.entity !== null) {
+      if (this.entity.ellipse.material && this.entity.ellipse.material.evenColor) {
+        this.entity.ellipse.material.evenColor._value.alpha = this.ellipseAlpha;
+        this.entity.ellipse.material.oddColor._value.alpha = this.ellipseAlpha;
+      } else {
+        if (this.entity.ellipse.color) {
+          this.entity.ellipse.color._value.alpha = this.ellipseAlpha;
+        } else {
+          this.entity.ellipse.material.color._value.alpha = this.ellipseAlpha;
+        }
+      }
+    }
+  }
+
+  setOpacity(opacity) {
+    this.setAlpha(opacity);
+  }
+
+  setAlpha(alpha) {
+    this.setEllipseAlpha(alpha);
+    this.setEllipseOutlineAlpha(alpha);
+  }
+
+  setExtrudedHeight(extrudedHeight, isconst = true) {
+    if (extrudedHeight === undefined) {
+      this.extrudedHeight = extrudedHeight;
+    } else {
+      this.extrudedHeight = Math.max(extrudedHeight, 0);
+    }
+    if (this.entity !== null) {
+      let that = this;
+      this.entity.ellipse.extrudedHeight = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return that.extrudedHeight;
+      }, isconst);
+    }
+  }
+
+  setHeight(height, isconst = true) {
+    if (height === undefined) {
+      this.height = height;
+    } else {
+      this.height = Math.max(height, 0);
+    }
+    if (this.entity) {
+      let that = this;
+      this.entity.ellipse.height = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return that.height;
+      }, isconst);
+    }
+  }
+
+  setOutline(outLine) {
+    this.outline = outLine;
+    if (this.entity !== null) {
+      this.entity.polyline.show = this.outline;
+    }
+  }
+
+  setOutlineColor(outlineColor) {
+    this.outlineColor = outlineColor;
+    if (this.outline === true && this.entity !== null) this.entity.polyline.material = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__["SpeedColor"].hex2CesiumColor(this.outlineColor);
+  }
+
+  setOutlineWidth(outlineWidth) {
+    this.outlineWidth = Math.max(outlineWidth, 1.0);
+    if (this.outline === true && this.entity !== null) this.entity.polyline.width = this.outlineWidth;
+  }
+
+  setRotation(rotation, isconst = true) {
+    this.rotation = rotation;
+    if (this.entity !== null) {
+      let that = this;
+      this.entity.ellipse.rotation = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return that.rotation;
+      }, isconst);
+      this.entity.polyline.rotation = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return that.rotation;
+      }, isconst);
+    }
+  }
+
+  setStyle(style) {
+    this.style = style;
+    this.setMaterial(this);
+  }
+
+  setPosition(position, isconst = true) {
+    this.position = position;
+    if (this.entity !== null) {
+      let that = this;
+      let center = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_3__["Coordinate"].handlePositon(that.position);
+      let outlinePos = getOutlinePosition(center, that.semiMajorAxis, that.semiMinorAxis, that.rotation);
+      this.entity.ellipse.hierarchy = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return outlinePos;
+      }, isconst);
+      /*
+            this.entity.position = new dependence.Cesium.CallbackProperty(function () {
+                return center;
+            }, isconst);
+      */
+    }
+  }
+
+  setSemiMinorAxis(semiMinorAxis, isconst = true) {
+    if (!this.semiMinorAxis) this.semiMinorAxis = 0;
+    this.semiMinorAxis = Math.min(semiMinorAxis, this.semiMajorAxis);
+    if (this.entity !== null) {
+      let that = this;
+      let center = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_3__["Coordinate"].handlePositon(that.position);
+      let outlinePos = getOutlinePosition(center, that.semiMajorAxis, that.semiMinorAxis, that.rotation);
+      this.entity.polyline.positions = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return outlinePos;
+      }, isconst);
+      this.entity.ellipse.hierarchy = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return outlinePos;
+      }, isconst);
+    }
+  }
+
+  setSemiMajorAxis(semiMajorAxis, isconst = true) {
+    if (!this.semiMajorAxis) this.semiMajorAxis = 0;
+    this.semiMajorAxis = Math.max(semiMajorAxis, this.semiMinorAxis);
+    if (this.entity !== null) {
+      let that = this;
+      let center = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_3__["Coordinate"].handlePositon(that.position);
+      let outlinePos = getOutlinePosition(center, that.semiMajorAxis, that.semiMinorAxis, that.rotation);
+      this.entity.ellipse.hierarchy = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return outlinePos;
+      }, isconst);
+    }
+  }
+
+  setRadius(radius, isconst = true) {
+    this.radius = radius;
+    this.semiMinorAxis = this.radius;
+    this.semiMajorAxis = this.radius;
+    if (this.entity !== null) {
+      let that = this;
+      let center = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_3__["Coordinate"].handlePositon(that.position);
+      let outlinePos = getOutlinePosition(center, that.semiMajorAxis, that.semiMinorAxis, that.rotation);
+      this.entity.ellipse.hierarchy = new _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.CallbackProperty(function () {
+        return outlinePos;
+      }, isconst);
+    }
+  }
+
+  setMaterial(config) {
+    this.material = _Material_js__WEBPACK_IMPORTED_MODULE_5__["Material"].handleFacialMaterial(config);
+    if (this.entity) {
+      this.entity.ellipse.material = this.material;
+    }
+  }
+
+  setColor(color) {
+    this.color = color;
+    if (this.material instanceof _Constants_js__WEBPACK_IMPORTED_MODULE_2__["dependence"].Cesium.Color) {
+      this.material = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__["SpeedColor"].hex2CesiumColor(color);
+      if (this.entity !== null) {
+        this.entity.ellipse.material = this.material;
+      }
+    } else {
+      if (this.material.color) {
+        this.material.color = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__["SpeedColor"].hex2CesiumColor(color);
+        if (this.entity !== null) {
+          this.entity.ellipse.material.color = this.material.color;
+        }
+      }
+    }
+  }
+
+  setEvenColor(evenColor) {
+    this.evenColor = evenColor;
+    if (this.material.evenColor) {
+      this.material.evenColor = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__["SpeedColor"].hex2CesiumColor(evenColor);
+      if (this.entity !== null) {
+        if (this.entity.ellipse.material.evenColor) this.entity.ellipse.material.evenColor = this.material.evenColor;
+      }
+    }
+  }
+
+  setOddColor(oddColor) {
+    this.oddColor = oddColor;
+    if (this.material.oddColor) {
+      this.material.oddColor = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__["SpeedColor"].hex2CesiumColor(oddColor);
+      if (this.entity !== null) {
+        if (this.entity.ellipse.material.oddColor) this.entity.ellipse.material.oddColor = this.material.oddColor;
+      }
+    }
+  }
+
+  setShow(show) {
+    if (show) {
+      if (!this.entity) {
+        let center = _Math_BasicMath_Coordinate_js__WEBPACK_IMPORTED_MODULE_3__["Coordinate"].handlePositon(this.position);
+        this.entity = _Constants_js__WEBPACK_IMPORTED_MODULE_2__["Speed3D_viewer"].viewer.entities.add({
+          position: center,
+          id: this.id,
+          name: this,
+          ellipse: {
+            semiMinorAxis: this.semiMinorAxis,
+            semiMajorAxis: this.semiMajorAxis,
+            material: this.material,
+            material: _Material_js__WEBPACK_IMPORTED_MODULE_5__["Material"].handleFacialMaterial(this),
+            height: this.height,
+            extrudedHeight: this.extrudedHeight,
+            outline: this.outline,
+            outlineColor: _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__["SpeedColor"].hex2CesiumColor(this.outlineColor),
+            outlineWidth: this.outlineWidth,
+            rotation: this.rotation,
+            zIndex: this.zIndex
+          }
+        });
+      }
+      this.entity.show = show;
+    } else {
+      if (this.entity) this.entity.show = false;
+      this.show = false;
+    }
+  }
+  select() {
+    if (!this.entity) return;
+    this.isSelected = true;
+    this.entity.ellipse.material = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__["SpeedColor"].hex2CesiumColor("#FFFF00");
+  }
+
+  deselect() {
+    if (!this.entity) return;
+    this.isSelected = false;
+    this.entity.ellipse.material = _Util_SpeedColor_js__WEBPACK_IMPORTED_MODULE_4__["SpeedColor"].hex2CesiumColor(this.color);
+  }
+
+  static load(config) {
+    return new Ellipse(config);
+  }
+
+  static loadAll(Array) {
+    let ret = [];
+    for (let i = 0; i < Array.length; i++) {
+      ret.push(Ellipse.load(Array[i]));
+    }
+    return ret;
+  }
+}
+
+
+
+/***/ }),
+/* 177 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -25586,7 +26222,7 @@ class Slope extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["MouseHandler"
 //mm.startFunction('SlopeAnalysis',{mode: 2,bindElment:'showmsg'})
 
 /***/ }),
-/* 176 */
+/* 178 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -25880,8 +26516,8 @@ class Profile extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["MouseHandle
         let element = document.getElementById(this.bindElment);
         if (element) {
             element.innerHTML = this.pendingMessage;;
- ;
-        }     this.destroy();
+        }
+        this.destroy();
         this.positions = [];
         if (this.supportLine !== null) {
             this.supportLine.destroy();
@@ -25901,7 +26537,7 @@ class Profile extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["MouseHandle
 //mm.startFunction('ProfileAnalysis',{bindElment:'showmsg'})
 
 /***/ }),
-/* 177 */
+/* 179 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -25994,6 +26630,7 @@ class EarthWork extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["MouseHand
     setTerrainProvider(terrainProvider) {
         this.terrainProvider = terrainProvider ? terrainProvider : _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.terrainProvider;
     }
+
     setGranularity(granularity) {
         this.granularity = granularity !== undefined && granularity !== null ? granularity : undefined;
     }
@@ -26058,6 +26695,7 @@ class EarthWork extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["MouseHand
     }
 
     start() {
+        _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.globe.depthTestAgainstTerrain = true;
         let element = document.getElementById(this.bindElment);
         if (element) {
             element.hidden = false;
@@ -26238,6 +26876,7 @@ class EarthWork extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["MouseHand
     }
 
     end(needClear = true) {
+        _Constants_js__WEBPACK_IMPORTED_MODULE_1__["Speed3D_viewer"].viewer.scene.globe.depthTestAgainstTerrain = false;
         if (needClear === false) {
             let element = document.getElementById(this.bindElment);
             if (element) element.innerHTML = this.pendingMessage;
@@ -26259,7 +26898,7 @@ class EarthWork extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["MouseHand
 //mm.startFunction('EarthWorkAnalysis',{bindElment:'showmsg',granularity:0.001})
 
 /***/ }),
-/* 178 */
+/* 180 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -26333,7 +26972,7 @@ class PointBuffer extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_2__["MouseHa
 
 
 /***/ }),
-/* 179 */
+/* 181 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -26407,7 +27046,7 @@ class LineStringBuffer extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_0__["Mo
 
 
 /***/ }),
-/* 180 */
+/* 182 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -26481,7 +27120,7 @@ class PolygonBuffer extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_3__["Mouse
 
 
 /***/ }),
-/* 181 */
+/* 183 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -27053,7 +27692,7 @@ class Visibility extends _MouseHandler_js__WEBPACK_IMPORTED_MODULE_1__["MouseHan
 
 
 /***/ }),
-/* 182 */
+/* 184 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
