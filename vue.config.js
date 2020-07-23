@@ -1,20 +1,22 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const webpack = require('webpack')
 const path = require('path')
-
+function resolve(dir) {
+  return path.join(__dirname, dir);
+}
 let cesiumSource = './node_modules/cesium/Source'
 let cesiumWorkers = '../Build/Cesium/Workers'
-
+const IS_DEV = process.env.NODE_ENV === "development"
 module.exports = {
-  // 输出文件目录
+  publicPath:  IS_DEV? "/" : "./",
   outputDir: "dist",
+  assetsDir: "static",
   // eslint-loader 是否在保存的时候检查
   lintOnSave: false,
   // webpack-dev-server 相关配置
   devServer: {
     open: process.platform === "darwin",
-    host: "0.0.0.0",
-    port: 9527,
+    port: 1024,
     https: false,
     hotOnly: false
   },
@@ -29,7 +31,8 @@ module.exports = {
       alias: {
         'vue$': 'vue/dist/vue.esm.js',
         '@': path.resolve('src'),
-        'cesium': path.resolve(__dirname, cesiumSource)
+        'cesium': path.resolve(__dirname, cesiumSource),
+        "static": resolve("static")
       }
     },
     plugins: [
@@ -38,7 +41,7 @@ module.exports = {
       new CopyWebpackPlugin([{ from: path.join(cesiumSource, 'Widgets'), to: 'Widgets' }]),
       new CopyWebpackPlugin([{ from: path.join(cesiumSource, 'ThirdParty/Workers'), to: 'ThirdParty/Workers' }]),
       new webpack.DefinePlugin({
-        CESIUM_BASE_URL: JSON.stringify('./')
+        CESIUM_BASE_URL: JSON.stringify('/')
       })
     ],
     module: {
