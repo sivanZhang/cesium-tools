@@ -1,41 +1,73 @@
 <template>
   <div id="cesiumContainer">
     <div id="controller">
-      <ButtonGroup>
-        <Button @click="backToHome" icon="md-globe" size="small">复位</Button>
-        <Button @click="simulatedFlight" icon="md-jet" size="small"
-          >模拟飞行</Button
-        >
-        <Button icon="md-plane" size="small">安全起飞</Button>
-        <Button @click="positionCamera" icon="md-locate" size="small"
-          >定位</Button
-        >
-      </ButtonGroup>
+      <Button
+        @click="backToHome"
+        title="缩放"
+        shape="circle"
+        type="primary"
+        size="large"
+        icon="md-globe"
+      ></Button>
+      <Button
+        @click="positionCamera"
+        title="定位"
+        shape="circle"
+        type="primary"
+        icon="md-locate"
+        size="large"
+      ></Button>
+    </div>
+    <div id="operation">
+      <div class="switch-wrap">
+        安全空间：
+        <i-switch :value="isShow" @on-change="change" size="small"> </i-switch>
+      </div>
+      <Button @click="simulatedFlight" icon="md-pulse" size="small"
+        >模拟跑道</Button
+      >
+      <Button @click="simulatedFlight" icon="md-jet" size="small"
+        >模拟飞行</Button
+      >
     </div>
   </div>
 </template>
 <script>
 const Cesium = require("cesium/Cesium");
-const MOUSE_MOVE = Cesium.ScreenSpaceEventType.MOUSE_MOVE;
-const LEFT_CLICK = Cesium.ScreenSpaceEventType.LEFT_CLICK
-import { Button, ButtonGroup } from "view-design";
+const { MOUSE_MOVE, RIGHT_CLICK, LEFT_CLICK } = Cesium.ScreenSpaceEventType;
+window.viewer = null;
+window.clickHandler = null;
+import { Button, ButtonGroup, Switch } from "view-design";
 export default {
   name: "CesiumScene",
   components: {
     Button,
     ButtonGroup,
+    "i-switch": Switch,
   },
   data() {
     return {
       Model: null,
+      isFlying: false,
+      isShow: false,
+      safeSpace: null,
+      positionList: [],
+      Collection:null
     };
   },
   mounted() {
     this.init();
+    
   },
   methods: {
+    change(status) {
+      if (this.safeSpace) {
+        this.isShow = status;
+        this.safeSpace.show = status;
+      }
+    },
     init() {
-      globalThis.viewer = new Cesium.Viewer("cesiumContainer", {
+      viewer = new Cesium.Viewer("cesiumContainer", {
         homeButton: false,
         terrainProvider: new Cesium.CesiumTerrainProvider({
           url: "http://192.168.1.210:8085/terrain/",
@@ -58,7 +90,19 @@ export default {
       const { globe } = scene;
       // globe.enableLighting = true
       globe.depthTestAgainstTerrain = true;
-      const Lable = viewer.entities.add({
+      this.safeSpace = viewer.entities.add({
+        name: "safe space",
+        show: false,
+        position: Cesium.Cartesian3.fromDegrees(90.3, 27.6, 8000.0),
+        cylinder: {
+          length: 8000.0,
+          topRadius: 16000.0,
+          bottomRadius: 8000.0,
+          material: Cesium.Color.RED.withAlpha(0.8),
+          outline: true,
+        },
+      });
+      /* const Lable = viewer.entities.add({
         label: {
           showBackground: true,
           font: "14px monospace",
@@ -67,24 +111,25 @@ export default {
           pixelOffset: new Cesium.Cartesian2(15, 0),
           disableDepthTestDistance: Infinity,
         },
-      });
-      const cartesianPnt = Cesium.Cartesian3.fromDegrees(90.3, 28.1, 10000);
-      globalThis.Model = viewer.entities.add({
-        name: "飞机模型",
-        position: cartesianPnt,
-        model: new Cesium.ModelGraphics({
-          uri: "/glb/Cesium_Air.glb",
-          minimumPixelSize: 128,
-          scale: 2.0,
-        }),
-      });
-      viewer.flyTo(Model, {
-        duration: 1.8,
-      });
-      let handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+      }); */
+      
+      // const cartesianPnt = Cesium.Cartesian3.fromDegrees(90.3, 28.1, 10000)
+      // globalThis.Model = viewer.entities.add({
+      //   name: '飞机模型',
+      //   position: cartesianPnt,
+      //   model: new Cesium.ModelGraphics({
+      //     uri: '/glb/Cesium_Air.glb',
+      //     minimumPixelSize: 128,
+      //     scale: 2.0,
+      //   }),
+      // })
+      // viewer.flyTo(Model, {
+      //   duration: 1.8,
+      // })
+      /* let handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
       handler.setInputAction(
         function(movement) {
-          var cartesian = globalThis.viewer.camera.pickEllipsoid(
+          var cartesian = viewer.camera.pickEllipsoid(
             movement.endPosition,
             scene.globe.ellipsoid
           );
@@ -110,14 +155,14 @@ export default {
           }
         }.bind(this),
         MOUSE_MOVE
-      );
+      ); */
     },
     backToHome() {
-      const { camera, scene } = viewer;
+      const { camera } = viewer;
       camera.flyHome(2);
     },
     positionCamera() {
-      const { camera, scene } = viewer;
+      const { camera } = viewer;
       camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(90.3, 27.6, 300000),
         orientation: {
@@ -125,82 +170,156 @@ export default {
           pitch: Cesium.Math.toRadians(-80.0),
           roll: 0.0,
         },
-        duration: 2,
+        duration: 1.5,
       });
     },
     // 模拟飞行
     simulatedFlight() {
+      this.Collection && this.Collection.entities.removeAll()
+      
       const { camera, scene } = viewer;
       const { globe } = scene;
-      const AAAHandler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+      window.clickHandler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
       let step = 0;
-
-      const Collection = new Cesium.CustomDataSource("path");
-      let startPnt = Collection.entities.add({
-        point: {
-          pixelSize: 8,
-          color: Cesium.Color.YELLOW,
-        },
+      this.Collection = new Cesium.CustomDataSource("path");
+      const Pnt = new Cesium.PointGraphics({
+        pixelSize: 6,
+        outlineColor: Cesium.Color.ORANGERED,
+        outlineWidth: 4,
       });
-      let endPnt = Collection.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(1, 2, 0),
-        point: {
-          pixelSize: 8,
-          color: Cesium.Color.YELLOW,
-        },
-      });
-      let pathLine = Collection.entities.add({
+      var Modal = this.Collection.entities.add({
         polyline: {
-          pixelSize: 8,
-          color: Cesium.Color.YELLOW,
+          width: 2,
+          material: Cesium.Color.DEEPSKYBLUE.withAlpha(0.3),
+          depthFailMaterial: Cesium.Color.DEEPSKYBLUE.withAlpha(0.3),
+          zIndex: 1,
+          clampToGround: true,
+        },
+        model: {
+          uri: "/glb/Cesium_Air.glb",
+          minimumPixelSize: 128,
+          zIndex: 100,
         },
       });
-      viewer.dataSources.add(Collection);
-      // viewer.dataSources.remove(Collection, true);
-      // Collection.entities.remove(Collection, true);
-      let positionList = []
-
-
-      AAAHandler.setInputAction(
-        function(movement) {
-          var cartesian = globalThis.viewer.camera.pickEllipsoid(
-            movement.endPosition,
-            scene.globe.ellipsoid
-          );
-          console.log('movement',movement);
+      viewer.dataSources.add(this.Collection);
+      window.clickHandler.setInputAction(
+        function({ position }) {
+          var cartesian = this.getPickPosition(position);
           if (cartesian) {
-            
-            positionList[step] = cartesian
+            cartesian;
+            this.positionList[step] = cartesian;
             step++;
-            if(step===1){
-              startPnt.position = cartesian
-              pathLine.polyline.show =false
+            if (step === 1) {
+              this.Collection.entities.add({
+                point: Pnt,
+                position: cartesian,
+              });
             }
-            if(step===2){
-              endPnt.position = cartesian
-              pathLine.polyline.positions = positionList
-              pathLine.polyline.show =true
-              step = 0
+            if (step > 1) {
+              this.Collection.entities.add({
+                point: Pnt.clone(),
+                position: cartesian,
+              });
             }
           }
         }.bind(this),
         LEFT_CLICK
       );
+      window.clickHandler.setInputAction(
+        function({ position }) {
+          window.clickHandler.removeInputAction(LEFT_CLICK);
+          if (step > 1) {
+            // 飞行
+            //Set bounds of our simulation time
+            var start = Cesium.JulianDate.fromDate(new Date());
+           
+            var property = new Cesium.SampledPositionProperty();
+            let timeArr = [start];
+            for (let index = 1; index < step; index++) {
+              timeArr[index] = Cesium.JulianDate.addSeconds(
+                timeArr[index-1],
+                24,
+                new Cesium.JulianDate()
+              );
+            }
+            let stop = timeArr[step-1].clone()
+            viewer.clock.startTime = start.clone();
+            viewer.clock.stopTime = timeArr[step-1].clone();
+            viewer.clock.currentTime = start.clone();
+            /* viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; */
+            viewer.clock.multiplier = 1;
+            /* viewer.timeline.zoomTo(start,stop); */
+
+            Modal.position = property;
+            Modal.polyline.positions = this.positionList;
+            Modal.orientation = new Cesium.VelocityOrientationProperty(
+              property
+            );
+            step = 0;
+            
+          }
+        }.bind(this),
+        RIGHT_CLICK
+      );
     },
-    // 起飞范围
-    takeoff() {},
+    getPickPosition(position) {
+      const pickedObject = viewer.scene.pick(position);
+      if (viewer.scene.pickPositionSupported && Cesium.defined(pickedObject)) {
+        return viewer.scene.pickPosition(position);
+      } else {
+        let ray = viewer.camera.getPickRay(position);
+        return viewer.scene.globe.pick(ray, viewer.scene);
+      }
+    },
+    endLeftClick() {
+      window.clickHandler && window.clickHandler.removeInputAction(LEFT_CLICK);
+      window.clickHandler = null;
+    },
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 #cesiumContainer {
   position: relative;
+  overflow: hidden;
+  height: 100vh;
   #controller {
+    .ivu-btn {
+      display: block;
+      & + .ivu-btn {
+        margin-top: 12px;
+      }
+    }
     position: absolute;
-    top: 16px;
-    left: 16px;
+    top: 15px;
+    right: 15px;
     z-index: 10;
+  }
+  #operation {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+    padding: 15px;
+    background-color: rgba($color: #000000, $alpha: 0.5);
+    border-radius: 4px;
+    color: #ccc;
+    .switch-wrap {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+  }
+  .cesium-viewer-bottom {
+    display: none;
+  }
+  .cesium-animation-buttonDisabled {
+    display: none;
+  }
+  .ivu-btn-group {
+    display: block;
+    margin-bottom: 6px;
   }
 }
 </style>
