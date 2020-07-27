@@ -19,7 +19,7 @@
       ></Button>
       <Button
         @click="flyToDIM"
-        title="DIM"
+        title="TILES"
         shape="circle"
         type="primary"
         icon="md-podium"
@@ -30,7 +30,7 @@
       <div class="switch-wrap">
         安全空间：
         <i-switch :value="isShow" @on-change="change" size="small"></i-switch>
-2222      </div>
+      </div>
       <Button
         class="btn1"
         type="primary"
@@ -126,6 +126,7 @@ export default {
           url: "http://192.168.1.210:9091/files/tiles/{z}/{x}/{y}.png",
         })
       });
+      window.viewer.screenSpaceEventHandler.destroy()
       const { camera, scene } = viewer;
       const { globe, imageryLayers } = scene;
       // var inspectorViewModel = viewer.cesium3DTilesInspector.viewModel;
@@ -304,8 +305,8 @@ export default {
       });
       window.viewer.dataSources.add(this.Collection);
       window.clickHandler.setInputAction(
-        function({ position }) {
-          var cartesian = this.getPickPosition(position);
+        function(e) {
+          var cartesian = this.getPickPosition(e.position);
           if (cartesian) {
             cartesian; //[step] = cartesian
             this.positionList.splice(step, 0, cartesian);
