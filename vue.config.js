@@ -19,15 +19,11 @@ module.exports = {
     port: 1024
   },
   productionSourceMap: true,
-  resolve: {
-    alias: {
-      'vue$': 'vue/dist/vue.esm.js',
-      '@': path.join(__dirname, 'src'),
-      'cesium': path.join(__dirname, cesiumSource)
-    }
-  },
   
   configureWebpack: {
+    output: {
+      sourcePrefix: ' '
+    },
     amd: {
       toUrlUndefined: true
     },
@@ -39,8 +35,9 @@ module.exports = {
       
       alias: {
         'vue$': 'vue/dist/vue.esm.js',
+        "static": path.resolve("static"),
         '@': path.resolve('src'),
-        "static": resolve("static")
+        'cesium': path.resolve(__dirname, cesiumSource)
       }
     },
     plugins: [
@@ -49,7 +46,7 @@ module.exports = {
       new CopyWebpackPlugin([{ from: path.join(cesiumSource, 'Widgets'), to: 'Widgets' }]),
       new CopyWebpackPlugin([{ from: path.join(cesiumSource, 'ThirdParty/Workers'), to: 'ThirdParty/Workers' }]),
       new webpack.DefinePlugin({
-        CESIUM_BASE_URL: JSON.stringify('./')
+        CESIUM_BASE_URL: JSON.stringify('')
       })
     ],
     module: {
