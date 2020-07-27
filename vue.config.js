@@ -1,10 +1,13 @@
 
 const webpack = require('webpack')
 const path = require('path')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 function resolve(dir) {
   return path.join(__dirname, dir);
 }
 
+const cesiumSource = './node_modules/cesium/Source'
+const cesiumWorkers = '../Build/Cesium/Workers'
 const IS_DEV = process.env.NODE_ENV === "development"
 module.exports = {
   publicPath:  IS_DEV? "/" : "./",
@@ -19,8 +22,8 @@ module.exports = {
   resolve: {
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
-      '@': path.resolve('src'),
-      'cesium': path.resolve(__dirname, cesiumSource)
+      '@': path.join(__dirname, 'src'),
+      'cesium': path.join(__dirname, cesiumSource)
     }
   },
   
